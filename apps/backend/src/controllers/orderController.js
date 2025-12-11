@@ -6,7 +6,7 @@ import { successResponse, paginatedResponse, errorResponse } from '../utils/apiR
 export const orderController = {
   // POST /api/checkout
   async checkout(req, res) {
-    const { customerName, customerPhone, customerEmail, items, address, city, state, zipCode, notes } = req.body;
+    const { customerName, customerPhone, customerEmail, items, address, neighborhood, number, complement, city, state, zipCode, notes } = req.body;
     // items: [{ productId, size, quantity, customName?, customNumber? }]
 
     if (!customerName || !customerPhone || !items || items.length === 0) {
@@ -57,6 +57,9 @@ export const orderController = {
         customerEmail,
         totalAmount,
         address,
+        neighborhood,
+        number,
+        complement,
         city,
         state,
         zipCode,
@@ -74,7 +77,7 @@ export const orderController = {
       data: { orderId: order.id, token, expiresAt }
     });
 
-    // Decrementar estoque
+    // Decrementar estoque (o estoque já foi reservado pelo carrinho, então apenas confirmamos)
     for (const item of items) {
       const inventory = await prisma.inventory.findUnique({
         where: { productId: item.productId }
@@ -89,6 +92,14 @@ export const orderController = {
           data: { stock: JSON.stringify(stock) }
         });
       }
+    }
+
+    // Limpar reservas do carrinho para esta sessão (sessionId é enviado opcionalmente)
+    const { sessionId } = req.body;
+    if (sessionId) {
+      await prisma.cartReservation.deleteMany({
+        where: { sessionId }
+      });
     }
 
     return successResponse(res, { order, token, expiresAt }, 201);
@@ -187,7 +198,7 @@ export const orderController = {
     const { id } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ['PENDENTE', 'CONFIRMADO', 'ENVIADO', 'ENTREGUE', 'CANCELADO'];
+    const validStatuses = ['PENDENTE', 'CONFIRMADO', 'EM_ROTA', 'ENVIADO', 'ENTREGUE', 'CANCELADO'];
     if (!validStatuses.includes(status)) {
       return errorResponse(res, 'Status inválido', 'INVALID_STATUS', 400);
     }

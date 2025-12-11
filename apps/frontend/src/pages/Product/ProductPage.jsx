@@ -20,9 +20,10 @@ function StarRating({ rating, size = 'md' }) {
 export function ProductPage() {
   const { slug } = useParams();
   const { product, loading, error } = useProduct(slug);
-  const { addItem } = useCart();
+  const { addItem, stockError, clearStockError } = useCart();
   const [selectedSize, setSelectedSize] = useState(null);
   const [added, setAdded] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   if (loading) {
     return (
@@ -40,11 +41,21 @@ export function ProductPage() {
     );
   }
 
-  const handleAddToCart = () => {
-    if (!selectedSize) return;
-    addItem(product, selectedSize);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+  const handleAddToCart = async () => {
+    if (!selectedSize || adding) return;
+    
+    clearStockError();
+    setAdding(true);
+    
+    try {
+      const success = await addItem(product, selectedSize);
+      if (success) {
+        setAdded(true);
+        setTimeout(() => setAdded(false), 2000);
+      }
+    } finally {
+      setAdding(false);
+    }
   };
 
   const avgRating = product.reviews?.length
@@ -150,22 +161,31 @@ export function ProductPage() {
           </div>
 
           {/* Adicionar ao carrinho */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button
-              onClick={handleAddToCart}
-              disabled={!selectedSize}
-              className={`flex-1 ${!selectedSize ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {added ? '✓ Adicionado ao carrinho!' : 'Adicionar ao Carrinho'}
-            </Button>
-            
-            {added && (
-              <Link to="/carrinho">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  Ver Carrinho
-                </Button>
-              </Link>
+          <div className="flex flex-col gap-3">
+            {stockError && (
+              <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg flex items-center justify-between">
+                <span>{stockError}</span>
+                <button onClick={clearStockError} className="text-red-400 hover:text-red-300">✕</button>
+              </div>
             )}
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                onClick={handleAddToCart}
+                disabled={!selectedSize || adding}
+                className={`flex-1 ${!selectedSize || adding ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {adding ? 'Verificando estoque...' : added ? '✓ Adicionado ao carrinho!' : 'Adicionar ao Carrinho'}
+              </Button>
+              
+              {added && (
+                <Link to="/carrinho">
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    Ver Carrinho
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Avaliações */}

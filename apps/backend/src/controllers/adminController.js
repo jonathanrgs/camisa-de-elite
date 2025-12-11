@@ -279,7 +279,8 @@ export const getAllOrders = async (req, res) => {
                 select: { id: true, name: true, images: true }
               }
             }
-          }
+          },
+          orderLink: true
         },
         skip,
         take: parseInt(limit),
@@ -321,7 +322,7 @@ export const updateOrderStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ['PENDENTE', 'CONFIRMADO', 'ENVIADO', 'ENTREGUE', 'CANCELADO'];
+    const validStatuses = ['PENDENTE', 'CONFIRMADO', 'EM_ROTA', 'ENVIADO', 'ENTREGUE', 'CANCELADO'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: 'Status inválido' });
     }

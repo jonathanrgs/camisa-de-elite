@@ -1,17 +1,25 @@
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { orderService } from '../../services/orderService';
 import { Spinner } from '../../components';
+import { CONFIG } from '../../config';
+import { useAuth } from '../../hooks/useAuth';
+
+const FRETE = 15;
+
+// Fallback: Camisa do Brasil
+const FALLBACK_IMAGE = 'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp';
 
 export function OrderPage() {
   const { token } = useParams();
-  const [order, setOrder] = useState(null);
+  const { user, isAuthenticated } = useAuth();
+  const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     orderService.getByToken(token)
-      .then(res => setOrder(res.data))
+      .then(res => setOrderData(res.data))
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
@@ -27,71 +35,241 @@ export function OrderPage() {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="font-heading text-2xl text-red-400 mb-4">Erro</h1>
-        <p className="text-gray-400">{error}</p>
+        <div className="max-w-md mx-auto">
+          <div className="w-20 h-20 mx-auto mb-6 bg-red-500/20 rounded-full flex items-center justify-center">
+            <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h1 className="font-heading text-2xl text-red-400 mb-4">Pedido não encontrado</h1>
+          <p className="text-gray-400 mb-6">{error}</p>
+          <Link to="/catalogo" className="btn-primary inline-block px-6 py-2">
+            Ver Catálogo
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const statusLabels = {
-    PENDENTE: { text: 'Aguardando confirmação', color: 'text-yellow-400' },
-    CONFIRMADO: { text: 'Confirmado', color: 'text-blue-400' },
-    ENVIADO: { text: 'Enviado', color: 'text-purple-400' },
-    ENTREGUE: { text: 'Entregue', color: 'text-green-400' },
-    PROBLEMA: { text: 'Problema', color: 'text-red-400' },
-    RESOLVIDO: { text: 'Resolvido', color: 'text-green-400' },
-    CANCELADO: { text: 'Cancelado', color: 'text-gray-400' }
+  const order = orderData?.order;
+  
+  const statusConfig = {
+    PENDENTE: { 
+      text: 'Aguardando Confirmação', 
+      color: 'text-yellow-400', 
+      bg: 'bg-yellow-500/20',
+      icon: '⏳',
+      description: 'Seu pedido foi recebido e está aguardando confirmação.'
+    },
+    CONFIRMADO: { 
+      text: 'Pedido Confirmado', 
+      color: 'text-blue-400', 
+      bg: 'bg-blue-500/20',
+      icon: '✓',
+      description: 'Seu pedido foi confirmado e está sendo preparado.'
+    },
+    EM_ROTA: { 
+      text: 'Em Rota de Entrega', 
+      color: 'text-purple-400', 
+      bg: 'bg-purple-500/20',
+      icon: '🚚',
+      description: 'Seu pedido está a caminho!'
+    },
+    ENVIADO: { 
+      text: 'Enviado', 
+      color: 'text-purple-400', 
+      bg: 'bg-purple-500/20',
+      icon: '📦',
+      description: 'Seu pedido foi enviado.'
+    },
+    ENTREGUE: { 
+      text: 'Entregue', 
+      color: 'text-green-400', 
+      bg: 'bg-green-500/20',
+      icon: '✅',
+      description: 'Seu pedido foi entregue com sucesso!'
+    },
+    CANCELADO: { 
+      text: 'Cancelado', 
+      color: 'text-red-400', 
+      bg: 'bg-red-500/20',
+      icon: '✕',
+      description: 'Este pedido foi cancelado.'
+    }
   };
 
-  const status = statusLabels[order.order.status] || statusLabels.PENDENTE;
+  const status = statusConfig[order?.status] || statusConfig.PENDENTE;
+  const subtotal = order?.items?.reduce((sum, item) => sum + (Number(item.unitPrice) * item.quantity), 0) || 0;
+
+  // Verifica se o usuário pode interagir com o pedido (dono ou admin)
+  const isOwner = isAuthenticated && (
+    user?.id === order?.userId || 
+    user?.email === order?.customerEmail
+  );
+  const isAdmin = isAuthenticated && user?.role === 'ADMIN';
+  const canTakeActions = isOwner || isAdmin;
+
+  const handleWhatsApp = () => {
+    const message = encodeURIComponent(`Olá! Gostaria de saber sobre meu pedido #${order?.id}`);
+    window.open(`https://wa.me/${CONFIG.whatsapp.number}?text=${message}`, '_blank');
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-3xl mx-auto">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="font-heading text-3xl text-eliteGold mb-2">Pedido Recebido!</h1>
-          <p className="text-gray-400">Obrigado por comprar na Camisa de Elite</p>
+          <h1 className="font-heading text-3xl text-eliteGold mb-2">Detalhes do Pedido</h1>
+          <p className="text-gray-400">Pedido #{order?.id?.slice(-8).toUpperCase()}</p>
         </div>
 
+        {/* Status Card */}
+        <div className={`card ${status.bg} border border-current/30 mb-6`}>
+          <div className="flex items-center gap-4">
+            <div className="text-4xl">{status.icon}</div>
+            <div>
+              <h2 className={`text-xl font-semibold ${status.color}`}>{status.text}</h2>
+              <p className="text-gray-400 text-sm">{status.description}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Dados do Cliente */}
+          <div className="card">
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-eliteGold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Dados do Cliente
+            </h3>
+            <div className="space-y-2 text-sm">
+              <p className="text-white">{order?.customerName}</p>
+              <p className="text-gray-400">{order?.customerPhone}</p>
+              {order?.customerEmail && <p className="text-gray-400">{order?.customerEmail}</p>}
+            </div>
+          </div>
+
+          {/* Endereço de Entrega */}
+          <div className="card">
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-eliteGold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Endereço de Entrega
+            </h3>
+            <div className="space-y-1 text-sm text-gray-300">
+              {order?.address && <p>{order.address}{order.number ? `, ${order.number}` : ''}</p>}
+              {order?.neighborhood && <p>{order.neighborhood}</p>}
+              {order?.city && <p>{order.city}/{order.state}</p>}
+              {order?.zipCode && <p className="text-gray-500">CEP: {order.zipCode}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Itens do Pedido */}
         <div className="card mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-gray-400">Status</span>
-            <span className={`font-semibold ${status.color}`}>{status.text}</span>
+          <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-eliteGold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            Itens do Pedido
+          </h3>
+
+          <div className="space-y-4">
+            {order?.items?.map(item => {
+              const images = item.product?.images ? JSON.parse(item.product.images) : [];
+              const firstImage = images[0] || FALLBACK_IMAGE;
+              
+              return (
+                <div key={item.id} className="flex gap-4 bg-eliteBlackSoft rounded-lg p-3">
+                  <img 
+                    src={firstImage} 
+                    alt={item.product?.name} 
+                    className="w-16 h-20 object-cover rounded"
+                    onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
+                  />
+                  <div className="flex-1">
+                    <p className="text-white font-medium">{item.product?.name}</p>
+                    <p className="text-sm text-gray-400">
+                      Tamanho: <span className="text-eliteGold">{item.size}</span> • Qtd: {item.quantity}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-eliteGold font-semibold">
+                      R$ {(Number(item.unitPrice) * item.quantity).toFixed(2).replace('.', ',')}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-gray-400">Pedido #</span>
-            <span>{order.order.id}</span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-gray-400">Total</span>
-            <span className="text-eliteGold font-semibold">R$ {Number(order.order.total).toFixed(2)}</span>
+          {/* Totais */}
+          <div className="border-t border-eliteGold/20 mt-4 pt-4 space-y-2">
+            <div className="flex justify-between text-gray-400 text-sm">
+              <span>Subtotal</span>
+              <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <div className="flex justify-between text-gray-400 text-sm">
+              <span>Frete</span>
+              <span>R$ {FRETE.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <div className="flex justify-between text-white font-bold text-lg pt-2">
+              <span>Total</span>
+              <span className="text-eliteGold">R$ {(subtotal + FRETE).toFixed(2).replace('.', ',')}</span>
+            </div>
           </div>
         </div>
 
-        <div className="card">
-          <h2 className="font-subheading font-semibold mb-4">Itens do Pedido</h2>
-
-          <div className="space-y-3">
-            {order.order.items.map(item => (
-              <div key={item.id} className="flex justify-between">
-                <span className="text-gray-300">
-                  {item.product.name} ({item.size}) x{item.quantity}
-                </span>
-                <span>R$ {(Number(item.unitPrice) * item.quantity).toFixed(2)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {!order.confirmedByAdmin && (
-          <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-center">
-            <p className="text-yellow-400">
-              Aguardando confirmação do vendedor. Você receberá uma mensagem no WhatsApp em breve.
-            </p>
+        {/* Observações */}
+        {order?.notes && (
+          <div className="card mb-6">
+            <h3 className="font-semibold text-white mb-2">Observações</h3>
+            <p className="text-gray-400 text-sm">{order.notes}</p>
           </div>
         )}
+
+        {/* Ações */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          {canTakeActions ? (
+            <button
+              onClick={handleWhatsApp}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+              </svg>
+              Falar no WhatsApp
+            </button>
+          ) : (
+            <div className="flex-1 bg-gray-700/50 text-gray-400 font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Faça login para interagir
+            </div>
+          )}
+          
+          <Link 
+            to="/catalogo" 
+            className="flex-1 bg-eliteGold/20 hover:bg-eliteGold/30 text-eliteGold font-semibold py-3 px-6 rounded-lg text-center transition-colors"
+          >
+            Continuar Comprando
+          </Link>
+        </div>
+
+        {/* Data do pedido */}
+        <p className="text-center text-gray-500 text-sm mt-6">
+          Pedido realizado em {new Date(order?.createdAt).toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </p>
       </div>
     </div>
   );

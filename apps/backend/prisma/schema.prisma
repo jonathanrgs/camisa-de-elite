@@ -22,6 +22,9 @@ model User {
   role         String   @default("CUSTOMER") // ADMIN, CUSTOMER
   favoriteTeam String?  // Time do coração
   address      String?
+  neighborhood String?
+  number       String?
+  complement   String?
   city         String?
   state        String?
   zipCode      String?
@@ -104,10 +107,13 @@ model Order {
   
   items        OrderItem[]
   totalAmount  Float
-  status       String   @default("PENDENTE") // PENDENTE, CONFIRMADO, ENVIADO, ENTREGUE, CANCELADO
+  status       String   @default("PENDENTE") // PENDENTE, CONFIRMADO, EM_ROTA, ENVIADO, ENTREGUE, CANCELADO
   
   // Dados de entrega
   address      String?
+  neighborhood String?
+  number       String?
+  complement   String?
   city         String?
   state        String?
   zipCode      String?
@@ -170,4 +176,22 @@ model Review {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// RESERVAS DE CARRINHO (Estoque Pendente)
+// ============================================
+model CartReservation {
+  id          String   @id @default(cuid())
+  sessionId   String   // Identificador único do carrinho (localStorage ou usuário)
+  productId   String
+  size        String   // P, M, G, GG, XG
+  quantity    Int
+  expiresAt   DateTime // Expira em 30 minutos de inatividade
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([sessionId, productId, size])
+  @@index([expiresAt])
+  @@index([sessionId])
 }

@@ -5,7 +5,10 @@ import { generateToken } from '../middlewares/auth.js';
 // Registrar novo usuário
 export const register = async (req, res) => {
   try {
-    const { email, password, name, phone, favoriteTeam } = req.body;
+    const { 
+      email, password, name, phone, favoriteTeam,
+      address, neighborhood, number, complement, city, state, zipCode 
+    } = req.body;
 
     // Validações
     if (!email || !password) {
@@ -33,6 +36,13 @@ export const register = async (req, res) => {
         name,
         phone,
         favoriteTeam,
+        address,
+        neighborhood,
+        number,
+        complement,
+        city,
+        state,
+        zipCode,
         role: 'CUSTOMER'
       },
       select: {
@@ -42,6 +52,13 @@ export const register = async (req, res) => {
         phone: true,
         role: true,
         favoriteTeam: true,
+        address: true,
+        neighborhood: true,
+        number: true,
+        complement: true,
+        city: true,
+        state: true,
+        zipCode: true,
         createdAt: true
       }
     });
@@ -92,6 +109,9 @@ export const login = async (req, res) => {
         role: user.role,
         favoriteTeam: user.favoriteTeam,
         address: user.address,
+        neighborhood: user.neighborhood,
+        number: user.number,
+        complement: user.complement,
         city: user.city,
         state: user.state,
         zipCode: user.zipCode
@@ -112,7 +132,7 @@ export const getProfile = async (req, res) => {
 // Atualizar perfil
 export const updateProfile = async (req, res) => {
   try {
-    const { name, phone, favoriteTeam, address, city, state, zipCode } = req.body;
+    const { name, phone, favoriteTeam, address, neighborhood, number, complement, city, state, zipCode } = req.body;
 
     const user = await prisma.user.update({
       where: { id: req.user.id },
@@ -121,6 +141,9 @@ export const updateProfile = async (req, res) => {
         phone,
         favoriteTeam,
         address,
+        neighborhood,
+        number,
+        complement,
         city,
         state,
         zipCode
@@ -133,6 +156,9 @@ export const updateProfile = async (req, res) => {
         role: true,
         favoriteTeam: true,
         address: true,
+        neighborhood: true,
+        number: true,
+        complement: true,
         city: true,
         state: true,
         zipCode: true,

@@ -5,13 +5,26 @@ import { Button } from '../../components';
 // Fallback: Camisa do Brasil
 const FALLBACK_IMAGE = 'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp';
 
+// Frete fixo
+const FRETE = 15;
+
 export function CartPage() {
-  const { items, removeItem, updateQuantity, total, count } = useCart();
+  const { items, removeItem, updateQuantity, total, count, stockError, clearStockError } = useCart();
 
   if (!items.length) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-md mx-auto">
+          {/* Mostrar erro de inatividade se houver */}
+          {stockError && (
+            <div className="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 py-3 rounded-lg mb-6 text-left">
+              <div className="flex items-start justify-between">
+                <span>{stockError}</span>
+                <button onClick={clearStockError} className="text-orange-400 hover:text-orange-300 ml-2">✕</button>
+              </div>
+            </div>
+          )}
+          
           <svg className="w-24 h-24 mx-auto text-gray-600 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
           </svg>
@@ -30,6 +43,22 @@ export function CartPage() {
       <h1 className="font-heading text-3xl text-eliteGold mb-8">
         Carrinho ({count} {count === 1 ? 'item' : 'itens'})
       </h1>
+
+      {/* Alerta de erro de estoque */}
+      {stockError && (
+        <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
+          <span>{stockError}</span>
+          <button onClick={clearStockError} className="text-red-400 hover:text-red-300">✕</button>
+        </div>
+      )}
+
+      {/* Aviso de reserva */}
+      <div className="bg-blue-500/10 border border-blue-500/30 text-blue-400 px-4 py-3 rounded-lg mb-6 text-sm flex items-center gap-2">
+        <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Os itens ficam reservados por 30 minutos. Após esse tempo, o carrinho será limpo automaticamente.</span>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Lista de itens */}
@@ -105,14 +134,14 @@ export function CartPage() {
             </div>
             <div className="flex justify-between text-gray-400">
               <span>Frete</span>
-              <span className="text-sm">A combinar</span>
+              <span className="text-green-400">R$ {FRETE.toFixed(2).replace('.', ',')}</span>
             </div>
           </div>
 
           <div className="border-t border-eliteGold/20 pt-4 mb-6">
             <div className="flex justify-between text-xl font-bold">
               <span className="text-white">Total</span>
-              <span className="text-eliteGold">R$ {total.toFixed(2).replace('.', ',')}</span>
+              <span className="text-eliteGold">R$ {(total + FRETE).toFixed(2).replace('.', ',')}</span>
             </div>
           </div>
 

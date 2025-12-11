@@ -2,6 +2,28 @@ import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { authService } from '../../services/authService';
 
+// Função para buscar endereço pelo CEP
+async function fetchAddressByCep(cep) {
+  const cleanCep = cep.replace(/\D/g, '');
+  if (cleanCep.length !== 8) return null;
+  
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+    const data = await response.json();
+    if (data.erro) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+// Função para formatar CEP
+function formatCep(value) {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 5) return numbers;
+  return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`;
+}
+
 export function ProfilePage() {
   const { user, updateUser } = useAuth();
   const [formData, setFormData] = useState({
@@ -9,6 +31,9 @@ export function ProfilePage() {
     phone: user?.phone || '',
     favoriteTeam: user?.favoriteTeam || '',
     address: user?.address || '',
+    neighborhood: user?.neighborhood || '',
+    number: user?.number || '',
+    complement: user?.complement || '',
     city: user?.city || '',
     state: user?.state || '',
     zipCode: user?.zipCode || ''
@@ -19,10 +44,40 @@ export function ProfilePage() {
     confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    if (name === 'zipCode') {
+      const formatted = formatCep(value);
+      setFormData({ ...formData, [name]: formatted });
+      
+      // Buscar endereço automaticamente quando CEP tiver 8 dígitos
+      const cleanCep = value.replace(/\D/g, '');
+      if (cleanCep.length === 8) {
+        handleCepSearch(cleanCep);
+      }
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleCepSearch = async (cep) => {
+    setLoadingCep(true);
+    const address = await fetchAddressByCep(cep);
+    setLoadingCep(false);
+    
+    if (address) {
+      setFormData(prev => ({
+        ...prev,
+        address: address.logradouro || prev.address,
+        neighborhood: address.bairro || '',
+        city: address.localidade || '',
+        state: address.uf || ''
+      }));
+    }
   };
 
   const handlePasswordChange = (e) => {
@@ -135,19 +190,27 @@ export function ProfilePage() {
 
           <h3 className="text-lg font-medium text-white">Endereço de entrega</h3>
 
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Endereço</label>
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              className="w-full bg-eliteBlack border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-eliteGold focus:outline-none"
-              placeholder="Rua, número, complemento"
-            />
-          </div>
-
           <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">CEP</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="zipCode"
+                  value={formData.zipCode}
+                  onChange={handleChange}
+                  className="w-full bg-eliteBlack border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-eliteGold focus:outline-none"
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+                {loadingCep && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-eliteGold border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Digite o CEP para preencher automaticamente</p>
+            </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Cidade</label>
               <input
@@ -170,15 +233,52 @@ export function ProfilePage() {
                 maxLength={2}
               />
             </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">CEP</label>
+              <label className="block text-sm text-gray-400 mb-1">Bairro</label>
               <input
                 type="text"
-                name="zipCode"
-                value={formData.zipCode}
+                name="neighborhood"
+                value={formData.neighborhood}
                 onChange={handleChange}
                 className="w-full bg-eliteBlack border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-eliteGold focus:outline-none"
-                placeholder="00000-000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Rua/Logradouro</label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                className="w-full bg-eliteBlack border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-eliteGold focus:outline-none"
+                placeholder="Rua, Avenida..."
+              />
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Número</label>
+              <input
+                type="text"
+                name="number"
+                value={formData.number || ''}
+                onChange={handleChange}
+                className="w-full bg-eliteBlack border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-eliteGold focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Complemento</label>
+              <input
+                type="text"
+                name="complement"
+                value={formData.complement || ''}
+                onChange={handleChange}
+                className="w-full bg-eliteBlack border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-eliteGold focus:outline-none"
+                placeholder="Apto, Bloco, Casa..."
               />
             </div>
           </div>

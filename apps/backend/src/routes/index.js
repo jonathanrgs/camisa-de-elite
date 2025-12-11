@@ -10,6 +10,7 @@ import alertRoutes from './alertRoutes.js';
 import authRoutes from './auth.js';
 import userRoutes from './user.js';
 import adminNewRoutes from './admin.js';
+import cartRoutes from './cartRoutes.js';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use('/checkout', checkoutRoutes);
 router.use('/order-link', orderLinkRoutes);
 router.use('/whatsapp', whatsappRoutes);
 router.use('/alerts', alertRoutes);
+router.use('/cart', cartRoutes);
 
 // Rotas de usuário logado
 router.use('/user', userRoutes);
