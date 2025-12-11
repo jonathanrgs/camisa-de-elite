@@ -1,7 +1,29 @@
 import { Link } from 'react-router-dom';
-import { Button } from '../../components';
+import { useState, useEffect } from 'react';
+import { Button, ProductCard } from '../../components';
+import { productService } from '../../services/productService';
 
 export function HomePage() {
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const response = await productService.getProducts({ pageSize: 8 });
+        // A API retorna { success, data: { items, pagination } }
+        const items = response?.data?.items || [];
+        setFeaturedProducts(items);
+      } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
+        setFeaturedProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProducts();
+  }, []);
+
   return (
     <div>
       {/* Hero Banner */}
@@ -47,28 +69,72 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Seções de produtos */}
+      {/* Produtos em Destaque */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="font-heading text-3xl text-eliteGold mb-2">Explore Nossa Coleção</h2>
+          <h2 className="text-3xl font-bold text-white mb-2">
+            Produtos em <span className="text-eliteGold">Destaque</span>
+          </h2>
+          <p className="text-gray-400">As camisas mais procuradas do momento</p>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-eliteGold border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {featuredProducts.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
+
+        <div className="text-center mt-10">
+          <Link to="/catalogo">
+            <Button>Ver Todos os Produtos</Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Categorias */}
+      <section className="container mx-auto px-4 py-16 border-t border-eliteGold/10">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-white mb-2">Explore por <span className="text-eliteGold">Categoria</span></h2>
           <p className="text-gray-400">Camisas nacionais e internacionais para todos os gostos</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Link to="/catalogo?category=NACIONAL" className="card group p-8 text-center">
-            <span className="text-4xl mb-4 block">🇧🇷</span>
-            <h3 className="font-subheading text-xl font-semibold group-hover:text-eliteGold transition-colors">
-              Times Nacionais
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link to="/catalogo?category=NACIONAL" className="card group p-6 text-center hover:border-eliteGold/60">
+            <span className="text-4xl mb-3 block">🇧🇷</span>
+            <h3 className="text-lg font-semibold group-hover:text-eliteGold transition-colors">
+              Nacionais
             </h3>
-            <p className="text-gray-400 text-sm mt-2">Brasileirão, Copa do Brasil e mais</p>
+            <p className="text-gray-500 text-sm mt-1">Brasileirão e mais</p>
           </Link>
 
-          <Link to="/catalogo?category=INTERNACIONAL" className="card group p-8 text-center">
-            <span className="text-4xl mb-4 block">🌍</span>
-            <h3 className="font-subheading text-xl font-semibold group-hover:text-eliteGold transition-colors">
-              Times Internacionais
+          <Link to="/catalogo?category=INTERNACIONAL" className="card group p-6 text-center hover:border-eliteGold/60">
+            <span className="text-4xl mb-3 block">🌍</span>
+            <h3 className="text-lg font-semibold group-hover:text-eliteGold transition-colors">
+              Internacionais
             </h3>
-            <p className="text-gray-400 text-sm mt-2">Premier League, La Liga, Serie A e mais</p>
+            <p className="text-gray-500 text-sm mt-1">Europa e mais</p>
+          </Link>
+
+          <Link to="/catalogo?category=SELECAO" className="card group p-6 text-center hover:border-eliteGold/60">
+            <span className="text-4xl mb-3 block">🏆</span>
+            <h3 className="text-lg font-semibold group-hover:text-eliteGold transition-colors">
+              Seleções
+            </h3>
+            <p className="text-gray-500 text-sm mt-1">Copa do Mundo</p>
+          </Link>
+
+          <Link to="/catalogo?category=RETRO" className="card group p-6 text-center hover:border-eliteGold/60">
+            <span className="text-4xl mb-3 block">⭐</span>
+            <h3 className="text-lg font-semibold group-hover:text-eliteGold transition-colors">
+              Retrô
+            </h3>
+            <p className="text-gray-500 text-sm mt-1">Clássicas</p>
           </Link>
         </div>
       </section>

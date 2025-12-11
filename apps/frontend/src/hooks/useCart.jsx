@@ -22,12 +22,17 @@ export function CartProvider({ children }) {
             : i
         );
       }
+      // images pode ser array de strings ou array de objetos
+      const firstImage = Array.isArray(product.images) 
+        ? (typeof product.images[0] === 'string' ? product.images[0] : product.images[0]?.url)
+        : null;
+      
       return [...prev, {
         productId: product.id,
         slug: product.slug,
         name: product.name,
         price: product.price,
-        image: product.images?.[0]?.url,
+        image: firstImage,
         size,
         quantity
       }];

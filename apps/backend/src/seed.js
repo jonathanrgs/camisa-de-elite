@@ -1,5 +1,10 @@
 import { prisma } from './config/prisma.js';
 
+// Imagem padrão: Camisa do Brasil
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1551854838-212c50b4c184?w=600&h=800&fit=crop';
+const BRASIL_FRONT = 'https://images.unsplash.com/photo-1551854838-212c50b4c184?w=600&h=800&fit=crop';
+const BRASIL_BACK = 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=600&h=800&fit=crop';
+
 const products = [
   {
     name: 'Camisa Flamengo I 2024',
@@ -7,8 +12,8 @@ const products = [
     description: 'Camisa oficial do Flamengo temporada 2024. Material de alta qualidade, tecido respirável com tecnologia Dri-Fit.',
     price: 149.90,
     images: JSON.stringify([
-      'https://images.mlstatic.com/D_NQ_NP_959901-MLB74267153813_022024-F.webp',
-      'https://images.mlstatic.com/D_NQ_NP_959901-MLB74267153813_022024-O.webp'
+      'https://http2.mlstatic.com/D_NQ_NP_661890-MLA54200771498_032023-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_661890-MLA54200771498_032023-O.webp'
     ]),
     category: 'NACIONAL',
     team: 'Flamengo',
@@ -24,8 +29,8 @@ const products = [
     description: 'Camisa oficial do Corinthians temporada 2024. Tradição e qualidade em cada detalhe.',
     price: 139.90,
     images: JSON.stringify([
-      'https://images.mlstatic.com/D_NQ_NP_878319-MLB72569704953_112023-F.webp',
-      'https://images.mlstatic.com/D_NQ_NP_878319-MLB72569704953_112023-O.webp'
+      'https://http2.mlstatic.com/D_NQ_NP_904612-MLA72569671498_112023-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_904612-MLA72569671498_112023-O.webp'
     ]),
     category: 'NACIONAL',
     team: 'Corinthians',
@@ -41,8 +46,8 @@ const products = [
     description: 'Camisa oficial do Real Madrid temporada 2024/25. O maior clube do mundo, camisa branca clássica.',
     price: 189.90,
     images: JSON.stringify([
-      'https://images.mlstatic.com/D_NQ_NP_767540-MLB75564067682_042024-F.webp',
-      'https://images.mlstatic.com/D_NQ_NP_767540-MLB75564067682_042024-O.webp'
+      'https://http2.mlstatic.com/D_NQ_NP_664742-MLA74851920945_032024-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_664742-MLA74851920945_032024-O.webp'
     ]),
     category: 'INTERNACIONAL',
     team: 'Real Madrid',
@@ -56,8 +61,8 @@ const products = [
     description: 'Camisa oficial do Barcelona temporada 2024/25. Més que un club, design clássico blaugrana.',
     price: 179.90,
     images: JSON.stringify([
-      'https://images.mlstatic.com/D_NQ_NP_604206-MLB75515958356_042024-F.webp',
-      'https://images.mlstatic.com/D_NQ_NP_604206-MLB75515958356_042024-O.webp'
+      'https://http2.mlstatic.com/D_NQ_NP_677609-MLA75515929841_042024-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_677609-MLA75515929841_042024-O.webp'
     ]),
     category: 'INTERNACIONAL',
     team: 'Barcelona',
@@ -71,8 +76,8 @@ const products = [
     description: 'Camisa oficial do Manchester City temporada 2024/25. Campeões da Premier League.',
     price: 199.90,
     images: JSON.stringify([
-      'https://images.mlstatic.com/D_NQ_NP_930376-MLB75533655472_042024-F.webp',
-      'https://images.mlstatic.com/D_NQ_NP_930376-MLB75533655472_042024-O.webp'
+      'https://http2.mlstatic.com/D_NQ_NP_986498-MLA75533619633_042024-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_986498-MLA75533619633_042024-O.webp'
     ]),
     category: 'INTERNACIONAL',
     team: 'Manchester City',
@@ -86,8 +91,8 @@ const products = [
     description: 'Camisa oficial do Palmeiras temporada 2024. Avanti Palestra! Verde tradicional.',
     price: 149.90,
     images: JSON.stringify([
-      'https://images.mlstatic.com/D_NQ_NP_697568-MLB72576296681_112023-F.webp',
-      'https://images.mlstatic.com/D_NQ_NP_697568-MLB72576296681_112023-O.webp'
+      'https://http2.mlstatic.com/D_NQ_NP_645816-MLA72576252113_112023-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_645816-MLA72576252113_112023-O.webp'
     ]),
     category: 'NACIONAL',
     team: 'Palmeiras',
@@ -98,13 +103,13 @@ const products = [
     season: '2024'
   },
   {
-    name: 'Camisa Santos Retrô 1962',
-    slug: 'camisa-santos-retro-1962',
-    description: 'Camisa retrô do Santos da era Pelé. Edição especial comemorativa do bicampeonato mundial.',
+    name: 'Camisa Santos Retrô Pelé',
+    slug: 'camisa-santos-retro-pele',
+    description: 'Camisa retrô do Santos da era Pelé. Edição especial comemorativa do rei do futebol.',
     price: 169.90,
     images: JSON.stringify([
-      'https://images.mlstatic.com/D_NQ_NP_666494-MLB52325820574_112022-F.webp',
-      'https://images.mlstatic.com/D_NQ_NP_666494-MLB52325820574_112022-O.webp'
+      'https://http2.mlstatic.com/D_NQ_NP_862617-MLB52325820573_112022-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_862617-MLB52325820573_112022-O.webp'
     ]),
     category: 'RETRO',
     team: 'Santos',
@@ -112,7 +117,7 @@ const products = [
     country: 'Brasil',
     state: 'SP',
     city: 'Santos',
-    season: '1962'
+    season: 'Retrô'
   },
   {
     name: 'Camisa Seleção Brasileira I 2024',
@@ -120,8 +125,8 @@ const products = [
     description: 'Camisa oficial da Seleção Brasileira 2024. A canarinho, a camisa mais bonita do mundo.',
     price: 219.90,
     images: JSON.stringify([
-      'https://images.mlstatic.com/D_NQ_NP_825074-MLB72578199829_112023-F.webp',
-      'https://images.mlstatic.com/D_NQ_NP_825074-MLB72578199829_112023-O.webp'
+      'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp'
     ]),
     category: 'SELECAO',
     team: 'Brasil',
@@ -134,8 +139,8 @@ const products = [
     description: 'Camisa oficial do Liverpool temporada 2024/25. You Will Never Walk Alone!',
     price: 189.90,
     images: JSON.stringify([
-      'https://images.mlstatic.com/D_NQ_NP_659951-MLB75486700552_042024-F.webp',
-      'https://images.mlstatic.com/D_NQ_NP_659951-MLB75486700552_042024-O.webp'
+      'https://http2.mlstatic.com/D_NQ_NP_756987-MLA75486667417_042024-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_756987-MLA75486667417_042024-O.webp'
     ]),
     category: 'INTERNACIONAL',
     team: 'Liverpool',
@@ -149,8 +154,8 @@ const products = [
     description: 'Camisa oficial do São Paulo FC temporada 2024. Tricolor paulista, tradição e glória.',
     price: 139.90,
     images: JSON.stringify([
-      'https://images.mlstatic.com/D_NQ_NP_936093-MLB72642477381_112023-F.webp',
-      'https://images.mlstatic.com/D_NQ_NP_936093-MLB72642477381_112023-O.webp'
+      'https://http2.mlstatic.com/D_NQ_NP_870659-MLA72642433681_112023-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_870659-MLA72642433681_112023-O.webp'
     ]),
     category: 'NACIONAL',
     team: 'São Paulo',
@@ -158,6 +163,35 @@ const products = [
     country: 'Brasil',
     state: 'SP',
     city: 'São Paulo',
+    season: '2024'
+  },
+  {
+    name: 'Camisa Juventus I 2024/25',
+    slug: 'camisa-juventus-i-2024-25',
+    description: 'Camisa oficial da Juventus temporada 2024/25. A Vecchia Signora em preto e branco.',
+    price: 179.90,
+    images: JSON.stringify([
+      'https://http2.mlstatic.com/D_NQ_NP_810988-MLA75523632849_042024-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_810988-MLA75523632849_042024-O.webp'
+    ]),
+    category: 'INTERNACIONAL',
+    team: 'Juventus',
+    league: 'Serie A',
+    country: 'Itália',
+    season: '2024/25'
+  },
+  {
+    name: 'Camisa Argentina I 2024',
+    slug: 'camisa-argentina-i-2024',
+    description: 'Camisa oficial da Seleção Argentina 2024. Tricampeã mundial, a albiceleste de Messi.',
+    price: 199.90,
+    images: JSON.stringify([
+      'https://http2.mlstatic.com/D_NQ_NP_991685-MLA75490709193_042024-O.webp',
+      'https://http2.mlstatic.com/D_NQ_NP_991685-MLA75490709193_042024-O.webp'
+    ]),
+    category: 'SELECAO',
+    team: 'Argentina',
+    country: 'Argentina',
     season: '2024'
   }
 ];
@@ -192,12 +226,13 @@ async function seed() {
   for (const productData of products) {
     const product = await prisma.product.create({ data: productData });
 
-    // Criar estoque para cada produto
+    // Criar estoque para cada produto (P, M, G, GG, XG)
     const stockData = {
       P: Math.floor(Math.random() * 15) + 5,
       M: Math.floor(Math.random() * 20) + 10,
       G: Math.floor(Math.random() * 20) + 10,
-      GG: Math.floor(Math.random() * 10) + 3
+      GG: Math.floor(Math.random() * 10) + 3,
+      XG: Math.floor(Math.random() * 8) + 2
     };
 
     await prisma.inventory.create({

@@ -1,10 +1,22 @@
 import { api } from './api';
 
 export const productService = {
-  list: (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    return api.get(`/products${query ? `?${query}` : ''}`);
+  getProducts: async (params = {}) => {
+    const query = new URLSearchParams();
+    
+    // Só adiciona parâmetros que existem e não são undefined
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        query.append(key, value);
+      }
+    });
+    
+    const queryString = query.toString();
+    const response = await api.get(`/products${queryString ? `?${queryString}` : ''}`);
+    return response;
   },
+
+  list: (params = {}) => productService.getProducts(params),
 
   getBySlug: (slug) => api.get(`/products/${slug}`),
 
