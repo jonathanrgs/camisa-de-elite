@@ -159,7 +159,7 @@ export function CatalogPage() {
       </div>
 
       {/* Barra de Filtros */}
-      <div className="bg-gradient-to-r from-gray-900/80 to-gray-900/40 backdrop-blur-sm border border-gray-800 rounded-2xl p-4 lg:p-6 mb-8">
+      <div className="bg-gradient-to-r from-gray-900/80 to-gray-900/40 backdrop-blur-sm border border-gray-800 rounded-2xl p-4 lg:p-6 mb-8 z-40 relative">
         <form onSubmit={handleSearch} className="space-y-4">
           {/* Linha principal */}
           <div className="flex flex-col lg:flex-row gap-4">
