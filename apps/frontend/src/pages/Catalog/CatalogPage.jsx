@@ -28,8 +28,8 @@ function FilterDropdown({ label, value, options, onChange, icon }) {
       
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-20 overflow-hidden min-w-[200px] animate-fade-in">
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden min-w-[200px] animate-fade-in">
             {options.map((option) => (
               <button
                 key={option.value}

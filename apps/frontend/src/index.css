@@ -298,29 +298,12 @@ body { @apply bg-eliteBlack text-white; }
   height: 6px;
 }
 
-.scrollbar-thin::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  @apply bg-gray-700 rounded-full;
+  @apply bg-eliteGold/30 rounded-full;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-600;
-}
-
-/* Scrollbar track e thumb customizados */
-.scrollbar-track-gray-900::-webkit-scrollbar-track {
-  @apply bg-gray-900/50;
-}
-
-.scrollbar-thumb-gray-700::-webkit-scrollbar-thumb {
-  @apply bg-gray-700;
-}
-
-.hover\:scrollbar-thumb-gray-600:hover::-webkit-scrollbar-thumb {
-  @apply bg-gray-600;
+  @apply bg-eliteGold/50;
 }
 
 /* Estilo para Firefox */
