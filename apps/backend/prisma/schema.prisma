@@ -14,14 +14,19 @@ datasource db {
 // USUÁRIOS
 // ============================================
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  phone     String?
-  password  String
-  role      String   @default("CUSTOMER") // ADMIN, CUSTOMER
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  phone        String?
+  password     String
+  role         String   @default("CUSTOMER") // ADMIN, CUSTOMER
+  favoriteTeam String?  // Time do coração
+  address      String?
+  city         String?
+  state        String?
+  zipCode      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   orders  Order[]
   reviews Review[]

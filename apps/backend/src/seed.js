@@ -1,4 +1,5 @@
 import { prisma } from './config/prisma.js';
+import bcrypt from 'bcryptjs';
 
 // Imagem padrão: Camisa do Brasil
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1551854838-212c50b4c184?w=600&h=800&fit=crop';
@@ -9,7 +10,7 @@ const products = [
   {
     name: 'Camisa Flamengo I 2024',
     slug: 'camisa-flamengo-i-2024',
-    description: 'Camisa oficial do Flamengo temporada 2024. Material de alta qualidade, tecido respirável com tecnologia Dri-Fit.',
+    description: 'Camisa do Flamengo temporada 2024. Material de alta qualidade, tecido respirável.',
     price: 149.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_661890-MLA54200771498_032023-O.webp',
@@ -26,7 +27,7 @@ const products = [
   {
     name: 'Camisa Corinthians I 2024',
     slug: 'camisa-corinthians-i-2024',
-    description: 'Camisa oficial do Corinthians temporada 2024. Tradição e qualidade em cada detalhe.',
+    description: 'Camisa do Corinthians temporada 2024. Tradição e qualidade em cada detalhe.',
     price: 139.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_904612-MLA72569671498_112023-O.webp',
@@ -43,7 +44,7 @@ const products = [
   {
     name: 'Camisa Real Madrid I 2024/25',
     slug: 'camisa-real-madrid-i-2024-25',
-    description: 'Camisa oficial do Real Madrid temporada 2024/25. O maior clube do mundo, camisa branca clássica.',
+    description: 'Camisa do Real Madrid temporada 2024/25. Design clássico em branco.',
     price: 189.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_664742-MLA74851920945_032024-O.webp',
@@ -58,7 +59,7 @@ const products = [
   {
     name: 'Camisa Barcelona I 2024/25',
     slug: 'camisa-barcelona-i-2024-25',
-    description: 'Camisa oficial do Barcelona temporada 2024/25. Més que un club, design clássico blaugrana.',
+    description: 'Camisa do Barcelona temporada 2024/25. Design clássico blaugrana.',
     price: 179.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_677609-MLA75515929841_042024-O.webp',
@@ -73,7 +74,7 @@ const products = [
   {
     name: 'Camisa Manchester City I 2024/25',
     slug: 'camisa-manchester-city-i-2024-25',
-    description: 'Camisa oficial do Manchester City temporada 2024/25. Campeões da Premier League.',
+    description: 'Camisa do Manchester City temporada 2024/25. Azul celeste tradicional.',
     price: 199.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_986498-MLA75533619633_042024-O.webp',
@@ -88,7 +89,7 @@ const products = [
   {
     name: 'Camisa Palmeiras I 2024',
     slug: 'camisa-palmeiras-i-2024',
-    description: 'Camisa oficial do Palmeiras temporada 2024. Avanti Palestra! Verde tradicional.',
+    description: 'Camisa do Palmeiras temporada 2024. Verde tradicional.',
     price: 149.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_645816-MLA72576252113_112023-O.webp',
@@ -103,9 +104,9 @@ const products = [
     season: '2024'
   },
   {
-    name: 'Camisa Santos Retrô Pelé',
+    name: 'Camisa Santos Retrô',
     slug: 'camisa-santos-retro-pele',
-    description: 'Camisa retrô do Santos da era Pelé. Edição especial comemorativa do rei do futebol.',
+    description: 'Camisa retrô do Santos. Estilo clássico dos anos dourados.',
     price: 169.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_862617-MLB52325820573_112022-O.webp',
@@ -122,7 +123,7 @@ const products = [
   {
     name: 'Camisa Seleção Brasileira I 2024',
     slug: 'camisa-selecao-brasileira-i-2024',
-    description: 'Camisa oficial da Seleção Brasileira 2024. A canarinho, a camisa mais bonita do mundo.',
+    description: 'Camisa da Seleção Brasileira 2024. A canarinho em amarelo vibrante.',
     price: 219.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp',
@@ -136,7 +137,7 @@ const products = [
   {
     name: 'Camisa Liverpool I 2024/25',
     slug: 'camisa-liverpool-i-2024-25',
-    description: 'Camisa oficial do Liverpool temporada 2024/25. You Will Never Walk Alone!',
+    description: 'Camisa do Liverpool temporada 2024/25. Vermelho tradicional.',
     price: 189.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_756987-MLA75486667417_042024-O.webp',
@@ -151,7 +152,7 @@ const products = [
   {
     name: 'Camisa São Paulo I 2024',
     slug: 'camisa-sao-paulo-i-2024',
-    description: 'Camisa oficial do São Paulo FC temporada 2024. Tricolor paulista, tradição e glória.',
+    description: 'Camisa do São Paulo FC temporada 2024. Tricolor paulista.',
     price: 139.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_870659-MLA72642433681_112023-O.webp',
@@ -168,7 +169,7 @@ const products = [
   {
     name: 'Camisa Juventus I 2024/25',
     slug: 'camisa-juventus-i-2024-25',
-    description: 'Camisa oficial da Juventus temporada 2024/25. A Vecchia Signora em preto e branco.',
+    description: 'Camisa da Juventus temporada 2024/25. Design em preto e branco.',
     price: 179.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_810988-MLA75523632849_042024-O.webp',
@@ -183,7 +184,7 @@ const products = [
   {
     name: 'Camisa Argentina I 2024',
     slug: 'camisa-argentina-i-2024',
-    description: 'Camisa oficial da Seleção Argentina 2024. Tricampeã mundial, a albiceleste de Messi.',
+    description: 'Camisa da Seleção Argentina 2024. Design albiceleste tradicional.',
     price: 199.90,
     images: JSON.stringify([
       'https://http2.mlstatic.com/D_NQ_NP_991685-MLA75490709193_042024-O.webp',
@@ -211,12 +212,13 @@ async function seed() {
 
   console.log('🗑️  Dados antigos removidos');
 
-  // Criar usuário admin
+  // Criar usuário admin com senha criptografada
+  const hashedPassword = await bcrypt.hash('admin123', 10);
   const admin = await prisma.user.create({
     data: {
       name: 'Admin',
       email: 'admin@camisadeelite.com',
-      password: 'admin123', // Em produção, usar hash
+      password: hashedPassword,
       role: 'ADMIN'
     }
   });

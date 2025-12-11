@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { Button, Spinner } from '../../components';
-
-// Número do WhatsApp da loja (substitua pelo número real)
-const WHATSAPP_NUMBER = '5534996769091';
+import { CONFIG } from '../../config';
 
 export function CheckoutPage() {
   const { items, total, clearCart, count } = useCart();
@@ -85,7 +83,7 @@ export function CheckoutPage() {
     setLoading(true);
     
     const message = generateWhatsAppMessage();
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+    const whatsappUrl = `https://wa.me/${CONFIG.whatsapp.number}?text=${message}`;
     
     // Limpar carrinho
     clearCart();

@@ -7,6 +7,16 @@ import { ProductGallery, Button, Spinner } from '../../components';
 // Ordem dos tamanhos para exibição
 const SIZE_ORDER = ['P', 'M', 'G', 'GG', 'XG'];
 
+// Componente para exibir estrelas
+function StarRating({ rating, size = 'md' }) {
+  const sizes = { sm: 'text-sm', md: 'text-base', lg: 'text-lg' };
+  return (
+    <span className={`text-eliteGold ${sizes[size]}`}>
+      {'★'.repeat(rating)}{'☆'.repeat(5 - rating)}
+    </span>
+  );
+}
+
 export function ProductPage() {
   const { slug } = useParams();
   const { product, loading, error } = useProduct(slug);
@@ -49,6 +59,10 @@ export function ProductPage() {
     size,
     quantity: stock[size] || 0
   }));
+  
+  // Calcular estoque total
+  const totalStock = Object.values(stock).reduce((sum, qty) => sum + qty, 0);
+  const availableSizes = sizes.filter(s => s.quantity > 0).length;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -72,8 +86,8 @@ export function ProductPage() {
 
           {avgRating && (
             <div className="flex items-center gap-2">
-              <span className="text-eliteGold">★</span>
-              <span>{avgRating}</span>
+              <StarRating rating={Math.round(avgRating)} />
+              <span className="text-white font-medium">{avgRating}</span>
               <span className="text-gray-500">({product.reviews.length} avaliações)</span>
             </div>
           )}
@@ -81,6 +95,18 @@ export function ProductPage() {
           <p className="text-eliteGold text-3xl font-bold">
             R$ {Number(product.price).toFixed(2).replace('.', ',')}
           </p>
+
+          {/* Estoque disponível */}
+          <div className="flex items-center gap-4 text-sm">
+            <span className={`px-3 py-1 rounded ${totalStock > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+              {totalStock > 0 ? `${totalStock} unidades em estoque` : 'Produto esgotado'}
+            </span>
+            {availableSizes > 0 && (
+              <span className="text-gray-400">
+                {availableSizes} tamanho{availableSizes > 1 ? 's' : ''} disponíve{availableSizes > 1 ? 'is' : ''}
+              </span>
+            )}
+          </div>
 
           {product.description && (
             <p className="text-gray-300">{product.description}</p>
@@ -145,18 +171,74 @@ export function ProductPage() {
           {/* Avaliações */}
           {product.reviews?.length > 0 && (
             <div className="border-t border-eliteGold/20 pt-6 mt-6">
-              <h3 className="font-semibold mb-4 text-white">Avaliações</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-white text-lg">Avaliações dos Clientes</h3>
+                <div className="flex items-center gap-2">
+                  <StarRating rating={Math.round(avgRating)} size="lg" />
+                  <span className="text-white font-bold text-lg">{avgRating}</span>
+                  <span className="text-gray-400">({product.reviews.length})</span>
+                </div>
+              </div>
+              
+              {/* Resumo das avaliações */}
+              <div className="bg-eliteBlackSoft p-4 rounded-lg mb-4">
+                <div className="grid grid-cols-5 gap-2 text-center text-sm">
+                  {[5, 4, 3, 2, 1].map(star => {
+                    const count = product.reviews.filter(r => r.rating === star).length;
+                    const percent = (count / product.reviews.length) * 100;
+                    return (
+                      <div key={star} className="space-y-1">
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="text-eliteGold">★</span>
+                          <span className="text-gray-400">{star}</span>
+                        </div>
+                        <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-eliteGold rounded-full transition-all"
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                        <span className="text-gray-500 text-xs">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {/* Lista de avaliações */}
               <div className="space-y-4">
                 {product.reviews.map(review => (
-                  <div key={review.id} className="bg-eliteBlackSoft p-4 rounded">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-eliteGold">{'★'.repeat(review.rating)}</span>
-                      <span className="text-gray-400 text-sm">{review.user?.name}</span>
+                  <div key={review.id} className="bg-eliteBlackSoft p-4 rounded-lg">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <StarRating rating={review.rating} size="sm" />
+                          <span className="text-white font-medium">{review.user?.name || 'Cliente'}</span>
+                        </div>
+                        {review.title && (
+                          <p className="font-semibold text-white">{review.title}</p>
+                        )}
+                      </div>
+                      <span className="text-gray-500 text-xs">
+                        {new Date(review.createdAt).toLocaleDateString('pt-BR')}
+                      </span>
                     </div>
-                    {review.title && <p className="font-medium text-white">{review.title}</p>}
-                    {review.comment && <p className="text-gray-300 text-sm">{review.comment}</p>}
+                    {review.comment && (
+                      <p className="text-gray-300 text-sm leading-relaxed">{review.comment}</p>
+                    )}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Sem avaliações */}
+          {(!product.reviews || product.reviews.length === 0) && (
+            <div className="border-t border-eliteGold/20 pt-6 mt-6">
+              <h3 className="font-semibold text-white text-lg mb-3">Avaliações</h3>
+              <div className="bg-eliteBlackSoft p-6 rounded-lg text-center">
+                <p className="text-gray-400">Este produto ainda não possui avaliações.</p>
+                <p className="text-gray-500 text-sm mt-1">Seja o primeiro a avaliar após a compra!</p>
               </div>
             </div>
           )}

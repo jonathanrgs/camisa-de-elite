@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
+import { useAuth } from '../../hooks/useAuth';
 
 export function Header() {
   const { count } = useCart();
+  const { isAuthenticated, isAdmin, user } = useAuth();
   
   return (
     <header className="sticky top-0 z-50 bg-eliteBlack/95 backdrop-blur border-b border-eliteGold/20">
@@ -21,6 +23,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-4">
+          {/* Carrinho */}
           <Link to="/carrinho" className="relative group">
             <svg className="w-6 h-6 text-white group-hover:text-eliteGold transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -31,6 +34,33 @@ export function Header() {
               </span>
             )}
           </Link>
+
+          {/* Usuário */}
+          {isAuthenticated ? (
+            <Link 
+              to={isAdmin ? '/admin' : '/minha-conta'} 
+              className="flex items-center gap-2 text-white hover:text-eliteGold transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span className="hidden md:inline text-sm">
+                {user?.name?.split(' ')[0] || 'Conta'}
+              </span>
+              {isAdmin && (
+                <span className="hidden md:inline bg-eliteGold/20 text-eliteGold text-xs px-1.5 py-0.5 rounded">
+                  Admin
+                </span>
+              )}
+            </Link>
+          ) : (
+            <Link 
+              to="/login" 
+              className="text-white hover:text-eliteGold transition-colors text-sm"
+            >
+              Entrar
+            </Link>
+          )}
         </div>
       </div>
     </header>
