@@ -52,6 +52,7 @@ export const orderController = {
     // Criar pedido
     const order = await prisma.order.create({
       data: {
+        userId: req.user?.id || null, // Associa ao usuário se estiver logado
         customerName,
         customerPhone,
         customerEmail,

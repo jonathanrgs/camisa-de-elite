@@ -41,17 +41,31 @@ export const productController = {
         take,
         orderBy: { createdAt: 'desc' },
         include: {
-          inventory: true
+          inventory: true,
+          reviews: {
+            where: { isApproved: true },
+            select: { rating: true }
+          }
         }
       }),
       prisma.product.count({ where })
     ]);
 
-    // Parse images JSON string para cada produto
-    const parsedItems = items.map(item => ({
-      ...item,
-      images: item.images ? JSON.parse(item.images) : []
-    }));
+    // Parse images JSON string e calcular média de avaliações
+    const parsedItems = items.map(item => {
+      const reviews = item.reviews || [];
+      const avgRating = reviews.length > 0 
+        ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length 
+        : 0;
+      
+      return {
+        ...item,
+        images: item.images ? JSON.parse(item.images) : [],
+        avgRating: Math.round(avgRating * 10) / 10,
+        reviewCount: reviews.length,
+        reviews: undefined // Remove reviews array da resposta
+      };
+    });
 
     return paginatedResponse(res, parsedItems, total, Number(page), take);
   },

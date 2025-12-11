@@ -134,9 +134,11 @@ export function FloatingCart() {
               <div className="border-t border-eliteGold/20 p-4 space-y-3">
                 {/* Alerta de erro de estoque */}
                 {stockError && (
-                  <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-3 py-2 rounded text-xs flex items-center justify-between">
+                  <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-3 py-2 rounded text-xs flex items-center justify-between animate-shake">
                     <span>{stockError}</span>
-                    <button onClick={clearStockError} className="text-red-400 hover:text-red-300">✕</button>
+                    <button onClick={clearStockError} className="text-red-400 hover:text-red-300 p-0.5">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                   </div>
                 )}
                 
@@ -165,8 +167,9 @@ export function FloatingCart() {
                 </Link>
                 
                 {/* Aviso de reserva */}
-                <p className="text-[10px] text-gray-500 text-center">
-                  ⏱️ Itens reservados por 30 minutos
+                <p className="text-[10px] text-gray-500 text-center flex items-center justify-center gap-1">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                  Itens reservados por 30 minutos
                 </p>
               </div>
             </>

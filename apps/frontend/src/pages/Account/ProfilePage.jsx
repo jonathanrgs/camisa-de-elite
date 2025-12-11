@@ -164,7 +164,7 @@ export function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Time do coração ⚽</label>
+            <label className="block text-sm text-gray-400 mb-1">Time do coração</label>
             <input
               type="text"
               name="favoriteTeam"

@@ -62,6 +62,40 @@ export const authorizeAdmin = (req, res, next) => {
   next();
 };
 
+// Middleware de autenticação opcional (não falha se não houver token)
+export const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      // Sem token, mas continua sem erro
+      return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        role: true
+      }
+    });
+
+    if (user) {
+      req.user = user;
+    }
+    next();
+  } catch (error) {
+    // Ignora erros de token e continua
+    next();
+  }
+};
+
 // Gerar token JWT
 export const generateToken = (userId) => {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });

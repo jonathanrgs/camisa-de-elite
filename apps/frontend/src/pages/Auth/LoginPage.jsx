@@ -12,7 +12,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from || '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,11 +21,14 @@ export function LoginPage() {
 
     try {
       const response = await login(email, password);
-      // Redirecionar admin para painel, usuário para onde estava
-      if (response.user.role === 'ADMIN') {
+      // Se veio de alguma página específica, volta para ela
+      // Caso contrário, admin vai para painel e usuário vai para home
+      if (from !== '/') {
+        navigate(from, { replace: true });
+      } else if (response.user.role === 'ADMIN') {
         navigate('/admin');
       } else {
-        navigate(from, { replace: true });
+        navigate('/', { replace: true });
       }
     } catch (err) {
       setError(err.message || 'Erro ao fazer login');

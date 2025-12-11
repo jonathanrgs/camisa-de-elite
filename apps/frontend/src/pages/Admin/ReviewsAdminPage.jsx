@@ -70,14 +70,18 @@ export function ReviewsAdminPage() {
 
       {reviews.length === 0 ? (
         <div className="card p-8 text-center">
-          <div className="text-4xl mb-4">✅</div>
+          <div className="w-16 h-16 mx-auto mb-4 bg-green-500/20 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
           <h2 className="text-xl text-white mb-2">Nenhuma avaliação pendente</h2>
           <p className="text-gray-400">Todas as avaliações foram moderadas.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {reviews.map((review) => (
-            <div key={review.id} className="card p-4">
+            <div key={review.id} className="card p-4 animate-fade-in">
               <div className="flex flex-wrap gap-4">
                 {/* Info do produto e autor */}
                 <div className="flex-1">
@@ -105,15 +109,17 @@ export function ReviewsAdminPage() {
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={() => handleModerate(review.id, true)}
-                    className="btn-primary px-4 py-2 text-sm"
+                    className="btn-primary px-4 py-2 text-sm flex items-center gap-1"
                   >
-                    ✓ Aprovar
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    Aprovar
                   </button>
                   <button
                     onClick={() => handleModerate(review.id, false)}
-                    className="btn-secondary px-4 py-2 text-sm text-red-400 border-red-400/30 hover:bg-red-500/10"
+                    className="btn-secondary px-4 py-2 text-sm text-red-400 border-red-400/30 hover:bg-red-500/10 flex items-center gap-1"
                   >
-                    ✕ Rejeitar
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    Rejeitar
                   </button>
                 </div>
               </div>

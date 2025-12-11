@@ -59,9 +59,10 @@ export function UsersAdminPage() {
         <h1 className="font-heading text-2xl text-eliteGold">Usuários</h1>
         <button
           onClick={() => setShowNewAdmin(true)}
-          className="btn-primary px-4 py-2 text-sm"
+          className="btn-primary px-4 py-2 text-sm flex items-center gap-2"
         >
-          ➕ Novo Admin
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+          Novo Admin
         </button>
       </div>
 
@@ -139,8 +140,11 @@ export function UsersAdminPage() {
 
       {/* Administradores */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">
-          🛡️ Administradores ({admins.length})
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <svg className="w-5 h-5 text-eliteGold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          Administradores ({admins.length})
         </h2>
         
         <div className="space-y-3">
@@ -160,8 +164,9 @@ export function UsersAdminPage() {
 
       {/* Clientes */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">
-          👥 Clientes ({customers.length})
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+          Clientes ({customers.length})
         </h2>
         
         {customers.length === 0 ? (
@@ -173,7 +178,7 @@ export function UsersAdminPage() {
                 <tr className="text-left text-gray-400 text-sm">
                   <th className="pb-2">Nome</th>
                   <th className="pb-2">E-mail</th>
-                  <th className="pb-2">Time ⚽</th>
+                  <th className="pb-2">Time</th>
                   <th className="pb-2 text-center">Pedidos</th>
                   <th className="pb-2 text-center">Avaliações</th>
                   <th className="pb-2">Cadastro</th>

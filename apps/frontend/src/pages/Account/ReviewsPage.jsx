@@ -101,8 +101,9 @@ export function ReviewsPage() {
       {/* Produtos para avaliar */}
       {productsToReview.length > 0 && (
         <div className="card p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">
-            📝 Produtos para avaliar
+          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-eliteGold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            Produtos para avaliar
           </h2>
           <p className="text-gray-400 text-sm mb-4">
             Avalie os produtos dos seus pedidos entregues
@@ -181,13 +182,16 @@ export function ReviewsPage() {
 
       {/* Minhas avaliações */}
       <div className="card p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">
-          ⭐ Minhas Avaliações
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <svg className="w-5 h-5 text-eliteGold" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+          Minhas Avaliações
         </h2>
         
         {reviews.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-4xl mb-4">⭐</div>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
+              <svg className="w-8 h-8 text-eliteGold" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+            </div>
             <p className="text-gray-400">Você ainda não fez nenhuma avaliação.</p>
           </div>
         ) : (

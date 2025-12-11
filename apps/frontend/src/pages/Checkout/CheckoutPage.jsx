@@ -505,7 +505,7 @@ export function CheckoutPage() {
             {/* Usuário já logado */}
             {isAuthenticated && (
               <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 flex items-center gap-2">
-                <span className="text-green-400">✓</span>
+                <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                 <span className="text-green-400 text-sm">
                   Logado como <strong>{user?.email}</strong>
                 </span>

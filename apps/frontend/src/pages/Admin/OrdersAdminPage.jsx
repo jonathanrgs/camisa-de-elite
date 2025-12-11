@@ -1,13 +1,71 @@
 import { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 
-const statusColors = {
-  PENDENTE: 'bg-yellow-500/20 text-yellow-400',
-  CONFIRMADO: 'bg-blue-500/20 text-blue-400',
-  EM_ROTA: 'bg-indigo-500/20 text-indigo-400',
-  ENVIADO: 'bg-purple-500/20 text-purple-400',
-  ENTREGUE: 'bg-green-500/20 text-green-400',
-  CANCELADO: 'bg-red-500/20 text-red-400'
+const statusConfig = {
+  PENDENTE: { 
+    bg: 'bg-yellow-500/20', 
+    text: 'text-yellow-400',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    )
+  },
+  CONFIRMADO: { 
+    bg: 'bg-blue-500/20', 
+    text: 'text-blue-400',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+    )
+  },
+  EM_ROTA: { 
+    bg: 'bg-indigo-500/20', 
+    text: 'text-indigo-400',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="1" y="3" width="15" height="13" rx="2" />
+        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+        <circle cx="5.5" cy="18.5" r="2.5" />
+        <circle cx="18.5" cy="18.5" r="2.5" />
+      </svg>
+    )
+  },
+  ENVIADO: { 
+    bg: 'bg-purple-500/20', 
+    text: 'text-purple-400',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+        <line x1="12" y1="22.08" x2="12" y2="12" />
+      </svg>
+    )
+  },
+  ENTREGUE: { 
+    bg: 'bg-green-500/20', 
+    text: 'text-green-400',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+    )
+  },
+  CANCELADO: { 
+    bg: 'bg-red-500/20', 
+    text: 'text-red-400',
+    icon: (
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+      </svg>
+    )
+  }
 };
 
 const statusOptions = [
@@ -116,12 +174,14 @@ export function OrdersAdminPage() {
             <div key={order.id} className="card">
               {/* Header do pedido */}
               <div 
-                className="p-4 cursor-pointer hover:bg-gray-800/30"
+                className="p-4 cursor-pointer hover:bg-gray-800/30 transition-colors"
                 onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
               >
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <span className={`w-3 h-3 rounded-full ${statusColors[order.status].replace('text-', 'bg-').replace('/20', '')}`}></span>
+                    <span className={`${statusConfig[order.status]?.bg} ${statusConfig[order.status]?.text} p-2 rounded-lg`}>
+                      {statusConfig[order.status]?.icon}
+                    </span>
                     <div>
                       <p className="text-white font-medium">{order.customerName}</p>
                       <p className="text-gray-400 text-sm">
@@ -141,7 +201,7 @@ export function OrdersAdminPage() {
                         handleStatusChange(order.id, e.target.value);
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className={`${statusColors[order.status]} bg-transparent border border-current rounded-lg px-3 py-1 text-sm focus:outline-none cursor-pointer`}
+                      className={`${statusConfig[order.status]?.bg} ${statusConfig[order.status]?.text} border border-current rounded-lg px-3 py-1 text-sm focus:outline-none cursor-pointer`}
                     >
                       {statusOptions.map(opt => (
                         <option key={opt.value} value={opt.value} className="bg-gray-900 text-white">
@@ -149,9 +209,9 @@ export function OrdersAdminPage() {
                         </option>
                       ))}
                     </select>
-                    <span className="text-gray-400">
-                      {expandedOrder === order.id ? '▲' : '▼'}
-                    </span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${expandedOrder === order.id ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -244,41 +304,46 @@ export function OrdersAdminPage() {
                     {order.status === 'PENDENTE' && (
                       <button
                         onClick={() => handleStatusChange(order.id, 'CONFIRMADO')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                       >
-                        ✓ Confirmar Pedido
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        Confirmar Pedido
                       </button>
                     )}
                     {order.status === 'CONFIRMADO' && (
                       <>
                         <button
                           onClick={() => handleStatusChange(order.id, 'EM_ROTA')}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                         >
-                          🚚 Em Rota de Entrega
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13" rx="2" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+                          Em Rota de Entrega
                         </button>
                         <button
                           onClick={() => handleStatusChange(order.id, 'ENVIADO')}
-                          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                         >
-                          📦 Marcar como Enviado
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></svg>
+                          Marcar como Enviado
                         </button>
                       </>
                     )}
                     {order.status === 'EM_ROTA' && (
                       <button
                         onClick={() => handleStatusChange(order.id, 'ENTREGUE')}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                       >
-                        ✓ Marcar como Entregue
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        Marcar como Entregue
                       </button>
                     )}
                     {order.status === 'ENVIADO' && (
                       <button
                         onClick={() => handleStatusChange(order.id, 'ENTREGUE')}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                       >
-                        ✓ Marcar como Entregue
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        Marcar como Entregue
                       </button>
                     )}
                     {order.status !== 'CANCELADO' && order.status !== 'ENTREGUE' && (
@@ -288,9 +353,10 @@ export function OrdersAdminPage() {
                             handleStatusChange(order.id, 'CANCELADO');
                           }
                         }}
-                        className="bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        className="bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                       >
-                        ✕ Cancelar
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        Cancelar
                       </button>
                     )}
                     
@@ -311,13 +377,13 @@ export function OrdersAdminPage() {
                   {/* Status entregue/cancelado */}
                   {order.status === 'ENTREGUE' && (
                     <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 flex items-center gap-2">
-                      <span className="text-green-400 text-lg">✓</span>
+                      <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                       <span className="text-green-400">Pedido entregue com sucesso!</span>
                     </div>
                   )}
                   {order.status === 'CANCELADO' && (
                     <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-center gap-2">
-                      <span className="text-red-400 text-lg">✕</span>
+                      <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                       <span className="text-red-400">Pedido cancelado</span>
                     </div>
                   )}

@@ -17,10 +17,12 @@ export function CartPage() {
         <div className="max-w-md mx-auto">
           {/* Mostrar erro de inatividade se houver */}
           {stockError && (
-            <div className="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 py-3 rounded-lg mb-6 text-left">
+            <div className="bg-orange-500/20 border border-orange-500/50 text-orange-400 px-4 py-3 rounded-lg mb-6 text-left animate-shake">
               <div className="flex items-start justify-between">
                 <span>{stockError}</span>
-                <button onClick={clearStockError} className="text-orange-400 hover:text-orange-300 ml-2">✕</button>
+                <button onClick={clearStockError} className="text-orange-400 hover:text-orange-300 ml-2 p-0.5">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
               </div>
             </div>
           )}
@@ -46,9 +48,11 @@ export function CartPage() {
 
       {/* Alerta de erro de estoque */}
       {stockError && (
-        <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
+        <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-6 flex items-center justify-between animate-shake">
           <span>{stockError}</span>
-          <button onClick={clearStockError} className="text-red-400 hover:text-red-300">✕</button>
+          <button onClick={clearStockError} className="text-red-400 hover:text-red-300 p-0.5">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         </div>
       )}
 

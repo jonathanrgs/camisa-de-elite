@@ -154,8 +154,9 @@ export function ProductPage() {
               })}
             </div>
             {selectedSize && stock[selectedSize] <= 5 && (
-              <p className="text-orange-400 text-sm mt-2">
-                ⚠️ Apenas {stock[selectedSize]} unidade(s) em estoque
+              <p className="text-orange-400 text-sm mt-2 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                Apenas {stock[selectedSize]} unidade(s) em estoque
               </p>
             )}
           </div>
@@ -163,9 +164,11 @@ export function ProductPage() {
           {/* Adicionar ao carrinho */}
           <div className="flex flex-col gap-3">
             {stockError && (
-              <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg flex items-center justify-between">
+              <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg flex items-center justify-between animate-shake">
                 <span>{stockError}</span>
-                <button onClick={clearStockError} className="text-red-400 hover:text-red-300">✕</button>
+                <button onClick={clearStockError} className="text-red-400 hover:text-red-300 p-1">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
               </div>
             )}
             
@@ -175,7 +178,17 @@ export function ProductPage() {
                 disabled={!selectedSize || adding}
                 className={`flex-1 ${!selectedSize || adding ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {adding ? 'Verificando estoque...' : added ? '✓ Adicionado ao carrinho!' : 'Adicionar ao Carrinho'}
+                {adding ? (
+                  <span className="flex items-center gap-2 justify-center">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Verificando estoque...
+                  </span>
+                ) : added ? (
+                  <span className="flex items-center gap-2 justify-center">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    Adicionado ao carrinho!
+                  </span>
+                ) : 'Adicionar ao Carrinho'}
               </Button>
               
               {added && (
@@ -203,7 +216,7 @@ export function ProductPage() {
               {/* Resumo das avaliações */}
               <div className="bg-eliteBlackSoft p-4 rounded-lg mb-4">
                 <div className="grid grid-cols-5 gap-2 text-center text-sm">
-                  {[5, 4, 3, 2, 1].map(star => {
+                  {[1, 2, 3, 4, 5].map(star => {
                     const count = product.reviews.filter(r => r.rating === star).length;
                     const percent = (count / product.reviews.length) * 100;
                     return (

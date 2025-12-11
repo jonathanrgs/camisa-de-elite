@@ -9,7 +9,12 @@ export function AboutPage() {
       <div className="space-y-8">
         {/* Hero */}
         <section className="card text-center py-8">
-          <div className="text-6xl mb-4">⚽</div>
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-eliteGold/20 flex items-center justify-center">
+            <svg className="w-10 h-10 text-eliteGold" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2"/>
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L10 14v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+            </svg>
+          </div>
           <h2 className="text-2xl font-semibold text-white mb-4">
             {CONFIG.storeSlogan}
           </h2>
@@ -24,21 +29,34 @@ export function AboutPage() {
           <h2 className="text-xl font-semibold text-white mb-6">O que oferecemos</h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-3xl mb-3">👕</div>
+              <div className="w-14 h-14 mx-auto mb-3 bg-eliteGold/20 rounded-full flex items-center justify-center">
+                <svg className="w-7 h-7 text-eliteGold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+              </div>
               <h3 className="font-semibold text-eliteGold mb-2">Variedade</h3>
               <p className="text-gray-400 text-sm">
                 Camisas de diversos times e seleções, nacionais e internacionais
               </p>
             </div>
             <div className="text-center">
-              <div className="text-3xl mb-3">🌍</div>
+              <div className="w-14 h-14 mx-auto mb-3 bg-blue-500/20 rounded-full flex items-center justify-center">
+                <svg className="w-7 h-7 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              </div>
               <h3 className="font-semibold text-eliteGold mb-2">Times do Mundo Todo</h3>
               <p className="text-gray-400 text-sm">
                 Clubes brasileiros, europeus, seleções nacionais e edições especiais
               </p>
             </div>
             <div className="text-center">
-              <div className="text-3xl mb-3">💬</div>
+              <div className="w-14 h-14 mx-auto mb-3 bg-green-500/20 rounded-full flex items-center justify-center">
+                <svg className="w-7 h-7 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
               <h3 className="font-semibold text-eliteGold mb-2">Atendimento Direto</h3>
               <p className="text-gray-400 text-sm">
                 Tire suas dúvidas diretamente pelo WhatsApp

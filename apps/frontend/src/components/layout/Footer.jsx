@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { CONFIG, getWhatsAppLink } from '../../config';
+import { Logo } from '../ui/Logo';
 
 export function Footer() {
   return (
@@ -7,7 +8,9 @@ export function Footer() {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-heading text-eliteGold text-lg mb-4">{CONFIG.storeName.toUpperCase()}</h3>
+            <Link to="/" className="inline-block mb-4 logo-hover">
+              <Logo size="sm" />
+            </Link>
             <p className="text-gray-400 text-sm">
               Catálogo de camisas de futebol. {CONFIG.storeSlogan}!
             </p>
