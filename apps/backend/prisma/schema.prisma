@@ -1,0 +1,168 @@
+// Schema Prisma - Camisa de Elite
+// Usando SQLite para desenvolvimento (sem necessidade de instalar banco)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USUÁRIOS
+// ============================================
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  password  String
+  role      String   @default("CUSTOMER") // ADMIN, CUSTOMER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders  Order[]
+  reviews Review[]
+}
+
+// ============================================
+// PRODUTOS
+// ============================================
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  price       Float
+  images      String   // JSON array de URLs
+  category    String   // NACIONAL, INTERNACIONAL, RETRO, SELECAO
+  team        String
+  league      String?
+  country     String?
+  state       String?
+  city        String?
+  season      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inventory Inventory?
+  orderItems OrderItem[]
+  reviews   Review[]
+}
+
+// ============================================
+// INVENTÁRIO / ESTOQUE
+// ============================================
+model Inventory {
+  id        String   @id @default(cuid())
+  productId String   @unique
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  // Estoque por tamanho (armazenado como JSON)
+  stock     String   // JSON: {"P": 10, "M": 15, "G": 20, "GG": 5}
+  
+  lowStockThreshold Int @default(5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  alerts StockAlert[]
+}
+
+// ============================================
+// ALERTAS DE ESTOQUE
+// ============================================
+model StockAlert {
+  id          String   @id @default(cuid())
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  size        String   // P, M, G, GG, XG
+  currentQty  Int
+  message     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+// ============================================
+// PEDIDOS
+// ============================================
+model Order {
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  
+  customerName  String
+  customerPhone String
+  customerEmail String?
+  
+  items        OrderItem[]
+  totalAmount  Float
+  status       String   @default("PENDENTE") // PENDENTE, CONFIRMADO, ENVIADO, ENTREGUE, CANCELADO
+  
+  // Dados de entrega
+  address      String?
+  city         String?
+  state        String?
+  zipCode      String?
+  
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orderLink    OrderLink?
+}
+
+// ============================================
+// ITENS DO PEDIDO
+// ============================================
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  
+  size      String   // P, M, G, GG, XG
+  quantity  Int
+  unitPrice Float
+  
+  // Personalização
+  customName   String?
+  customNumber String?
+  
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// LINK DE PEDIDO (com expiração)
+// ============================================
+model OrderLink {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// AVALIAÇÕES
+// ============================================
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  authorName String
+  rating     Int      // 1-5
+  comment    String?
+  isApproved Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

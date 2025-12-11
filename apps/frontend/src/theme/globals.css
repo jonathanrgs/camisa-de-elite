@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-eliteBlack text-white font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-eliteGold text-eliteBlack font-semibold rounded-md
+           hover:bg-eliteGoldLight transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-eliteGold focus:ring-offset-2 focus:ring-offset-eliteBlack;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 border border-eliteGold text-eliteGold font-semibold rounded-md
+           hover:bg-eliteGold hover:text-eliteBlack transition-colors duration-200;
+  }
+
+  .card {
+    @apply bg-eliteBlackSoft border border-eliteGold/20 rounded-lg p-4
+           hover:border-eliteGold/60 transition-colors duration-200;
+  }
+
+  .input {
+    @apply w-full px-3 py-2 bg-eliteBlackSoft border border-eliteGold/30 rounded-md
+           text-white placeholder-gray-500
+           focus:outline-none focus:border-eliteGold focus:ring-1 focus:ring-eliteGold;
+  }
+
+  .badge {
+    @apply inline-block px-2 py-1 text-xs font-medium rounded;
+  }
+
+  .badge-gold {
+    @apply badge bg-eliteGold/20 text-eliteGold;
+  }
+
+  .badge-success {
+    @apply badge bg-green-500/20 text-green-400;
+  }
+
+  .badge-error {
+    @apply badge bg-red-500/20 text-red-400;
+  }
+}

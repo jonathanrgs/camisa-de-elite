@@ -1,0 +1,13 @@
+{
+  "name": "camisa-de-elite",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:front\" \"npm run dev:back\"",
+    "dev:front": "npm run dev -w apps/frontend",
+    "dev:back": "npm run dev -w apps/backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
