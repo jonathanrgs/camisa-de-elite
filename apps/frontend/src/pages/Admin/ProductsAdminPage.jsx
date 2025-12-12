@@ -16,6 +16,7 @@ if (typeof window !== 'undefined' && !document.getElementById('hide-arrows-style
 }
 import { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
+import { ImageUploader } from '../../components/admin/ImageUploader';
 
 export function ProductsAdminPage() {
   const [products, setProducts] = useState([]);
@@ -432,60 +433,46 @@ export function ProductsAdminPage() {
                 {/* Aba 2: Imagens */}
                 {activeTab === 2 && (
                   <div className="space-y-4 animate-fade-in">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-gray-400">Adicione URLs das imagens do produto</p>
-                      <button
-                        type="button"
-                        onClick={addImageField}
-                        className="text-sm text-eliteGold hover:text-eliteGoldLight flex items-center gap-1 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    <ImageUploader
+                      productId={editingProduct?.id}
+                      images={formData.images.filter(img => img && img.trim())}
+                      onImagesChange={(newImages) => setFormData({ ...formData, images: newImages.length > 0 ? newImages : [''] })}
+                      onError={(err) => setMessage({ type: 'error', text: err })}
+                    />
+                    
+                    {/* Opção de adicionar URL manualmente */}
+                    <details className="group">
+                      <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-300 flex items-center gap-2">
+                        <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
-                        Adicionar
-                      </button>
-                    </div>
-
-                    {/* Preview de imagens */}
-                    {formData.images.some(img => img.trim()) && (
-                      <div className="flex gap-3 flex-wrap">
-                        {formData.images.filter(img => img.trim()).map((img, index) => (
-                          <div key={index} className="w-24 h-24 rounded-xl overflow-hidden border-2 border-gray-700 relative group">
-                            <img src={img} alt="" className="w-full h-full object-cover" onError={(e) => e.target.src = 'https://via.placeholder.com/96?text=Erro'} />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <span className="text-white text-xs font-medium">{index + 1}ª</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                      {formData.images.map((img, index) => (
-                        <div key={index} className="flex gap-2 items-center">
-                          <span className="w-6 h-6 rounded-lg bg-gray-800 text-gray-500 text-xs flex items-center justify-center flex-shrink-0">
-                            {index + 1}
-                          </span>
+                        Adicionar URL manualmente
+                      </summary>
+                      <div className="mt-3 space-y-2 pl-6">
+                        <div className="flex gap-2">
                           <input
                             type="url"
-                            value={img}
-                            onChange={(e) => updateImage(index, e.target.value)}
-                            className="flex-1 bg-gray-900/80 border border-gray-700 hover:border-gray-600 focus:border-eliteGold rounded-xl px-4 py-2.5 text-white text-sm outline-none transition-all"
+                            id="manual-url-input"
                             placeholder="https://exemplo.com/imagem.jpg"
+                            className="flex-1 bg-gray-900/80 border border-gray-700 hover:border-gray-600 focus:border-eliteGold rounded-xl px-4 py-2.5 text-white text-sm outline-none transition-all"
                           />
                           <button
                             type="button"
-                            onClick={() => removeImage(index)}
-                            className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                            title="Remover"
+                            onClick={() => {
+                              const input = document.getElementById('manual-url-input');
+                              if (input.value.trim()) {
+                                const currentImages = formData.images.filter(img => img && img.trim());
+                                setFormData({ ...formData, images: [...currentImages, input.value.trim()] });
+                                input.value = '';
+                              }
+                            }}
+                            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white text-sm transition-colors"
                           >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            Adicionar
                           </button>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    </details>
                   </div>
                 )}
 

@@ -14,7 +14,10 @@ import {
   getShippingConfig,
   saveShippingConfig
 } from '../controllers/adminController.js';
+import { imageController } from '../controllers/imageController.js';
 import { authenticate, authorizeAdmin } from '../middlewares/auth.js';
+import { handleProductUpload, handleSingleUpload } from '../middlewares/upload.js';
+import { asyncHandler } from '../middlewares/asyncHandler.js';
 
 const router = Router();
 
@@ -30,6 +33,14 @@ router.post('/products', createProduct);
 router.put('/products/:id', updateProduct);
 router.delete('/products/:id', deleteProduct);
 router.get('/products/export/csv', exportProductsCSV);
+
+// Upload de imagens de produtos
+router.post('/products/:id/images', handleProductUpload, asyncHandler(imageController.uploadProductImages));
+router.delete('/products/:id/images', asyncHandler(imageController.deleteProductImage));
+router.put('/products/:id/images/reorder', asyncHandler(imageController.reorderProductImages));
+
+// Upload genérico (retorna só a URL)
+router.post('/upload', handleSingleUpload, asyncHandler(imageController.uploadSingle));
 
 // Pedidos
 router.get('/orders', getAllOrders);
