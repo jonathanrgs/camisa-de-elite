@@ -38,7 +38,58 @@ export function CheckoutPage() {
   const [editingPersonal, setEditingPersonal] = useState(false);
   const [editingAddress, setEditingAddress] = useState(false);
 
+  // Hook para buscar config de frete
+  function useShippingConfig() {
+    const [shipping, setShipping] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    useEffect(() => {
+      import('../../services/adminService').then(({ adminService }) => {
+        adminService.getShippingConfig().then(({ config }) => {
+          setShipping(config);
+          setLoading(false);
+        }).catch(() => {
+          setError('Erro ao carregar regras de frete');
+          setLoading(false);
+        });
+      });
+    }, []);
+    return { shipping, loading, error };
+  }
+
   // Verificar se usuário logado tem dados preenchidos
+
+  export function CheckoutPage() {
+    const { shipping, loading: shippingLoading, error: shippingError } = useShippingConfig();
+    // Função para calcular o frete baseado nas regras
+    function calcFrete() {
+      if (!shipping) return 0;
+      // Frete grátis por valor
+      if (shipping.freeShippingMin && total >= shipping.freeShippingMin) return 0;
+      // Regras por cidade
+      if (form.city && form.state && shipping.cityRules) {
+        try {
+          const rules = JSON.parse(shipping.cityRules);
+          const found = rules.find(r =>
+            r.city?.trim().toLowerCase() === form.city.trim().toLowerCase() &&
+            r.state?.trim().toLowerCase() === form.state.trim().toLowerCase()
+          );
+          if (found) {
+            if (found.type === 'fixed') return found.value;
+            if (found.type === 'km' && shipping.originCep && form.zipCode) {
+              // Simulação: cobrar por km (distância real pode ser implementada depois)
+              // Aqui, apenas retorna valor base * raio
+              return found.value * (found.kmRadius || 1);
+            }
+          }
+        } catch {}
+      }
+      // Fixo padrão
+      return shipping.fixedShipping || 0;
+    }
+
+    const frete = calcFrete();
+    const totalWithShipping = total + frete;
   const hasPersonalData = isAuthenticated && user && (user.name || user.phone);
   const hasAddressData = isAuthenticated && user && (user.address || user.zipCode);
 
@@ -144,7 +195,7 @@ export function CheckoutPage() {
 
     message += `━━━━━━━━━━━━━━━━━━━━━━\n`;
     message += `📦 Subtotal: R$ ${total.toFixed(2).replace('.', ',')}\n`;
-    message += `🚚 Frete: R$ ${FRETE.toFixed(2).replace('.', ',')}\n`;
+      message += `🚚 Frete: R$ ${frete.toFixed(2).replace('.', ',')}\n`;
     message += `💰 *TOTAL: R$ ${totalWithShipping.toFixed(2).replace('.', ',')}*\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━━\n`;
 
@@ -315,11 +366,11 @@ export function CheckoutPage() {
                 <hr className="border-eliteGold/20 my-2" />
                 <div className="flex justify-between text-gray-400">
                   <span>Subtotal</span>
-                  <span>R$ {(orderData?.total - FRETE).toFixed(2).replace('.', ',')}</span>
+                  <span>R$ {(orderData?.total - frete).toFixed(2).replace('.', ',')}</span>
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Frete</span>
-                  <span>R$ {FRETE.toFixed(2).replace('.', ',')}</span>
+                  <span>{shippingLoading ? 'Carregando...' : `R$ ${frete.toFixed(2).replace('.', ',')}`}</span>
                 </div>
                 <div className="flex justify-between text-white font-bold text-base pt-2">
                   <span>Total</span>
@@ -725,7 +776,7 @@ export function CheckoutPage() {
             </div>
             <div className="flex justify-between text-gray-400">
               <span>Frete</span>
-              <span className="text-green-400">R$ {FRETE.toFixed(2).replace('.', ',')}</span>
+              <span className="text-green-400">{shippingLoading ? 'Carregando...' : `R$ ${frete.toFixed(2).replace('.', ',')}`}</span>
             </div>
             <div className="flex justify-between text-xl font-bold pt-2 border-t border-eliteGold/20">
               <span className="text-white">Total</span>

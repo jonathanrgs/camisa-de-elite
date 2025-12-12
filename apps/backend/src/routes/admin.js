@@ -10,7 +10,9 @@ import {
   getStats,
   getPendingReviews,
   moderateReview,
-  getAllUsers
+  getAllUsers,
+  getShippingConfig,
+  saveShippingConfig
 } from '../controllers/adminController.js';
 import { authenticate, authorizeAdmin } from '../middlewares/auth.js';
 
@@ -39,5 +41,9 @@ router.put('/reviews/:id/moderate', moderateReview);
 
 // Usuários
 router.get('/users', getAllUsers);
+
+// Frete
+router.get('/shipping-config', getShippingConfig);
+router.post('/shipping-config', saveShippingConfig);
 
 export default router;

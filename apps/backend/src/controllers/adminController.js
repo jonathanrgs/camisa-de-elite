@@ -1,3 +1,40 @@
+// ========================
+// FRETE (SHIPPING CONFIG)
+// ========================
+
+// Buscar configuração de frete (sempre retorna a mais recente)
+export const getShippingConfig = async (req, res) => {
+  try {
+    const config = await prisma.shippingConfig.findFirst({
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ config });
+  } catch (error) {
+    console.error('Erro ao buscar config de frete:', error);
+    res.status(500).json({ error: 'Erro ao buscar configuração de frete' });
+  }
+};
+
+// Salvar/atualizar configuração de frete (sempre cria nova versão)
+export const saveShippingConfig = async (req, res) => {
+  try {
+    const { freeShippingMin, fixedShipping, cityRules, originCep, originNumber, radiusKm } = req.body;
+    const config = await prisma.shippingConfig.create({
+      data: {
+        freeShippingMin: parseFloat(freeShippingMin),
+        fixedShipping: parseFloat(fixedShipping),
+        cityRules: JSON.stringify(cityRules || []),
+        originCep,
+        originNumber,
+        radiusKm: radiusKm ? parseInt(radiusKm) : null
+      }
+    });
+    res.status(201).json({ message: 'Configuração de frete salva', config });
+  } catch (error) {
+    console.error('Erro ao salvar config de frete:', error);
+    res.status(500).json({ error: 'Erro ao salvar configuração de frete' });
+  }
+};
 import { prisma } from '../config/prisma.js';
 
 // ========================

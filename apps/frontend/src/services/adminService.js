@@ -37,5 +37,9 @@ export const adminService = {
   getUsers: () => api.get('/admin/users'),
 
   // Criar novo admin
-  createAdmin: (data) => api.post('/auth/admin', data)
+  createAdmin: (data) => api.post('/auth/admin', data),
+
+  // Frete
+  getShippingConfig: () => api.get('/admin/shipping-config'),
+  saveShippingConfig: (data) => api.post('/admin/shipping-config', data)
 };

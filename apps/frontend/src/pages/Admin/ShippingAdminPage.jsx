@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { adminService } from '../../services/adminService';
+import { CityRulesCRUD } from './CityRulesCRUD';
+
 
 export function ShippingAdminPage() {
   const [freeShippingMin, setFreeShippingMin] = useState(200);
@@ -7,13 +10,57 @@ export function ShippingAdminPage() {
   const [originCep, setOriginCep] = useState('');
   const [originNumber, setOriginNumber] = useState('');
   const [radiusKm, setRadiusKm] = useState(10);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
 
-  // Funções para adicionar/remover regras por cidade
-  // ...
+  useEffect(() => {
+    async function fetchConfig() {
+      setLoading(true);
+      try {
+        const { config } = await adminService.getShippingConfig();
+        if (config) {
+          setFreeShippingMin(config.freeShippingMin || 0);
+          setFixedShipping(config.fixedShipping || 0);
+          setCityRules(config.cityRules ? JSON.parse(config.cityRules) : []);
+          setOriginCep(config.originCep || '');
+          setOriginNumber(config.originNumber || '');
+          setRadiusKm(config.radiusKm || 10);
+        }
+      } catch (err) {
+        setMessage('Erro ao carregar configuração de frete');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchConfig();
+  }, []);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    try {
+      await adminService.saveShippingConfig({
+        freeShippingMin,
+        fixedShipping,
+        cityRules,
+        originCep,
+        originNumber,
+        radiusKm
+      });
+      setMessage('Configuração salva com sucesso!');
+    } catch (err) {
+      setMessage('Erro ao salvar configuração');
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center text-gray-400 py-12">Carregando configuração...</div>;
+  }
 
   return (
-    <div className="card max-w-2xl mx-auto mt-8 p-8">
+    <form onSubmit={handleSave} className="card max-w-2xl mx-auto mt-8 p-8">
       <h1 className="font-heading text-2xl text-eliteGold mb-6">Configuração de Frete</h1>
+      {message && <div className="mb-4 text-center text-sm text-eliteGold">{message}</div>}
       <div className="space-y-6">
         <div>
           <label className="block text-gray-300 font-medium mb-1">Valor mínimo para frete grátis</label>
@@ -26,7 +73,7 @@ export function ShippingAdminPage() {
         <div className="border-t border-gray-700 pt-6">
           <h2 className="text-lg text-eliteGold mb-2">Regras por Cidade</h2>
           <p className="text-gray-400 text-sm mb-2">Adicione regras específicas para cidades: frete fixo ou por km.</p>
-          {/* Aqui virá a lista de cidades e formulário para adicionar nova */}
+          <CityRulesCRUD cityRules={cityRules} setCityRules={setCityRules} />
         </div>
         <div className="border-t border-gray-700 pt-6">
           <h2 className="text-lg text-eliteGold mb-2">Cálculo por Distância</h2>
@@ -47,8 +94,8 @@ export function ShippingAdminPage() {
         </div>
       </div>
       <div className="flex justify-end mt-8">
-        <button className="btn-primary px-6 py-2">Salvar Configurações</button>
+        <button type="submit" className="btn-primary px-6 py-2">Salvar Configurações</button>
       </div>
-    </div>
+    </form>
   );
 }
