@@ -38,7 +38,12 @@ export function ProductsAdminPage() {
     images: [''],
     stock: { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }
   });
+  // Debug: log sempre que as imagens mudarem
+  useEffect(() => {
+    console.log('Imagens atuais do formulário:', formData.images);
+  }, [formData.images]);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -115,6 +120,20 @@ export function ProductsAdminPage() {
     e.preventDefault();
     setSubmitting(true);
     setMessage({ type: '', text: '' });
+
+    // Validação dos campos obrigatórios
+    const errors = {};
+    if (!formData.name.trim()) errors.name = 'Nome é obrigatório';
+    if (!formData.price || isNaN(Number(formData.price))) errors.price = 'Preço é obrigatório';
+    if (!formData.category) errors.category = 'Categoria é obrigatória';
+    if (!formData.team.trim()) errors.team = 'Time é obrigatório';
+    if (!formData.images.filter(img => img && img.trim()).length) errors.images = 'Pelo menos uma imagem é obrigatória';
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setSubmitting(false);
+      setMessage({ type: 'error', text: 'Preencha todos os campos obrigatórios.' });
+      return;
+    }
 
     const data = {
       ...formData,
@@ -439,7 +458,32 @@ export function ProductsAdminPage() {
                       onImagesChange={(newImages) => setFormData({ ...formData, images: newImages.length > 0 ? newImages : [''] })}
                       onError={(err) => setMessage({ type: 'error', text: err })}
                     />
-                    
+                    {/* Preview das imagens antes de enviar */}
+                    <div className="flex gap-2 flex-wrap mt-2">
+                      {formData.images.filter(img => img && img.trim()).map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={img}
+                          alt={`Imagem ${idx + 1}`}
+                          className="w-20 h-20 object-cover rounded border border-gray-700"
+                        />
+                      ))}
+                    </div>
+                    {formErrors.images && (
+                      <div className="text-red-400 text-xs mt-1">{formErrors.images}</div>
+                    )}
+                    {/* Preview das imagens */}
+                    <div className="flex gap-2 flex-wrap mt-2">
+                      {formData.images.filter(img => img && img.trim()).map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={img}
+                          alt={`Imagem ${idx + 1}`}
+                          className="w-20 h-20 object-cover rounded border border-gray-700"
+                        />
+                      ))}
+                    </div>
+
                     {/* Opção de adicionar URL manualmente */}
                     <details className="group">
                       <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-300 flex items-center gap-2">
@@ -514,6 +558,16 @@ export function ProductsAdminPage() {
                     </div>
                   </div>
                 )}
+                {/* Botão de submit */}
+                <div className="flex justify-end mt-6">
+                  <button
+                    type="submit"
+                    className="btn-primary px-6 py-2 rounded-xl text-white font-semibold"
+                    disabled={submitting}
+                  >
+                    {editingProduct ? 'Atualizar Produto' : 'Criar Produto'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -588,6 +642,6 @@ export function ProductsAdminPage() {
           <p className="text-gray-400 text-center py-8">Nenhum produto encontrado</p>
         )}
       </div>
-  </div>
+    </div>
   );
 }
