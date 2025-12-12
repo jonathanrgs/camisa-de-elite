@@ -229,12 +229,15 @@ async function seed() {
     const product = await prisma.product.create({ data: productData });
 
     // Criar estoque para cada produto (P, M, G, GG, XG)
+    // Criar estoque para cada produto (P, M, G, XL, 2XL, 3XL, 4XL)
     const stockData = {
       P: Math.floor(Math.random() * 15) + 5,
       M: Math.floor(Math.random() * 20) + 10,
       G: Math.floor(Math.random() * 20) + 10,
-      GG: Math.floor(Math.random() * 10) + 3,
-      XG: Math.floor(Math.random() * 8) + 2
+      XL: Math.floor(Math.random() * 10) + 3,
+      '2XL': Math.floor(Math.random() * 8) + 2,
+      '3XL': Math.floor(Math.random() * 5) + 1,
+      '4XL': Math.floor(Math.random() * 3)
     };
 
     await prisma.inventory.create({

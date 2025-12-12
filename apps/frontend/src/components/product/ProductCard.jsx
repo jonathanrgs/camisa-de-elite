@@ -88,7 +88,7 @@ export function ProductCard({ product }) {
           alt={product.name}
           className="w-full h-full object-cover transition-all duration-500"
           style={{
-            transform: isHovered ? 'scale(1.5)' : 'scale(1)',
+            transform: isHovered ? 'scale(1.08)' : 'scale(1)',
             transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`
           }}
           onError={() => setImageError(true)}

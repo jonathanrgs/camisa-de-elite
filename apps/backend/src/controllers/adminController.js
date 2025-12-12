@@ -35,18 +35,21 @@ export const getAllProducts = async (req, res) => {
       prisma.product.count({ where })
     ]);
 
-    // Parse images JSON
-    const productsWithParsedImages = products.map(p => ({
-      ...p,
-      images: JSON.parse(p.images || '[]'),
-      inventory: p.inventory ? {
-        ...p.inventory,
-        stock: JSON.parse(p.inventory.stock || '{}')
-      } : null
-    }));
+    // Parse images JSON e inventory.stock para objeto
+    const productsWithParsed = products.map(p => {
+      let images = [];
+      try { images = JSON.parse(p.images || '[]'); } catch { images = []; }
+      let inventory = null;
+      if (p.inventory) {
+        let stock = {};
+        try { stock = JSON.parse(p.inventory.stock || '{}'); } catch { stock = {}; }
+        inventory = { ...p.inventory, stock };
+      }
+      return { ...p, images, inventory };
+    });
 
     res.json({
-      products: productsWithParsedImages,
+      products: productsWithParsed,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -106,7 +109,7 @@ export const createProduct = async (req, res) => {
     await prisma.inventory.create({
       data: {
         productId: product.id,
-        stock: JSON.stringify(stock || { P: 0, M: 0, G: 0, GG: 0, XG: 0 }),
+        stock: JSON.stringify(stock || { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }),
         lowStockThreshold: 5
       }
     });
@@ -204,7 +207,7 @@ export const exportProductsCSV = async (req, res) => {
     const headers = [
       'ID', 'Nome', 'Slug', 'Descrição', 'Preço', 'Categoria', 
       'Time', 'Liga', 'País', 'Estado', 'Cidade', 'Temporada',
-      'Ativo', 'Estoque P', 'Estoque M', 'Estoque G', 'Estoque GG', 'Estoque XG',
+      'Ativo', 'Estoque P', 'Estoque M', 'Estoque G', 'Estoque XL', 'Estoque 2XL', 'Estoque 3XL', 'Estoque 4XL',
       'Criado em'
     ];
 
@@ -227,8 +230,10 @@ export const exportProductsCSV = async (req, res) => {
         stock.P || 0,
         stock.M || 0,
         stock.G || 0,
-        stock.GG || 0,
-        stock.XG || 0,
+        stock.XL || 0,
+        stock['2XL'] || 0,
+        stock['3XL'] || 0,
+        stock['4XL'] || 0,
         p.createdAt.toISOString().split('T')[0]
       ].join(',');
     });

@@ -11,6 +11,19 @@ datasource db {
 }
 
 // ============================================
+// CONFIGURAÇÃO DE FRETE
+// ============================================
+model ShippingConfig {
+  id            String   @id @default(cuid())
+  freeShippingMin Float   // Valor mínimo para frete grátis
+  fixedShipping   Float   // Frete fixo padrão
+  cityRules       String  // JSON: [{city, state, type: 'fixed'|'km', value, kmRadius}]
+  originCep       String?
+  originNumber    String?
+  radiusKm        Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
 // USUÁRIOS
 // ============================================
 model User {
@@ -70,7 +83,7 @@ model Inventory {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   
   // Estoque por tamanho (armazenado como JSON)
-  stock     String   // JSON: {"P": 10, "M": 15, "G": 20, "GG": 5}
+  stock     String   // JSON: {"P": 10, "M": 15, "G": 20, "XL": 5, "2XL": 2, "3XL": 1, "4XL": 0}
   
   lowStockThreshold Int @default(5)
   createdAt DateTime @default(now())
@@ -86,7 +99,7 @@ model StockAlert {
   id          String   @id @default(cuid())
   inventoryId String
   inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-  size        String   // P, M, G, GG, XG
+  size        String   // P, M, G, XL, 2XL, 3XL, 4XL
   currentQty  Int
   message     String
   isRead      Boolean  @default(false)
@@ -135,7 +148,7 @@ model OrderItem {
   productId String
   product   Product  @relation(fields: [productId], references: [id])
   
-  size      String   // P, M, G, GG, XG
+  size      String   // P, M, G, XL, 2XL, 3XL, 4XL
   quantity  Int
   unitPrice Float
   
@@ -185,7 +198,7 @@ model CartReservation {
   id          String   @id @default(cuid())
   sessionId   String   // Identificador único do carrinho (localStorage ou usuário)
   productId   String
-  size        String   // P, M, G, GG, XG
+  size        String   // P, M, G, XL, 2XL, 3XL, 4XL
   quantity    Int
   expiresAt   DateTime // Expira em 30 minutos de inatividade
   createdAt   DateTime @default(now())

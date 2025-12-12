@@ -110,7 +110,8 @@ export function HomePage() {
           <p className="text-gray-400">Camisas nacionais e internacionais para todos os gostos</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          {/* ...links de categoria... */}
           <Link to="/catalogo?category=NACIONAL" className="card-hover group p-6 text-center border border-transparent hover:border-eliteGold/40">
             <div className="w-12 h-12 mx-auto mb-3 bg-green-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -123,7 +124,6 @@ export function HomePage() {
             </h3>
             <p className="text-gray-500 text-sm mt-1">Brasileirão e mais</p>
           </Link>
-
           <Link to="/catalogo?category=INTERNACIONAL" className="card-hover group p-6 text-center border border-transparent hover:border-eliteGold/40">
             <div className="w-12 h-12 mx-auto mb-3 bg-blue-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -136,7 +136,6 @@ export function HomePage() {
             </h3>
             <p className="text-gray-500 text-sm mt-1">Europa e mais</p>
           </Link>
-
           <Link to="/catalogo?category=SELECAO" className="card-hover group p-6 text-center border border-transparent hover:border-eliteGold/40">
             <div className="w-12 h-12 mx-auto mb-3 bg-yellow-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -153,7 +152,6 @@ export function HomePage() {
             </h3>
             <p className="text-gray-500 text-sm mt-1">Copa do Mundo</p>
           </Link>
-
           <Link to="/catalogo?category=RETRO" className="card-hover group p-6 text-center border border-transparent hover:border-eliteGold/40">
             <div className="w-12 h-12 mx-auto mb-3 bg-eliteGold/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6 text-eliteGold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -166,11 +164,8 @@ export function HomePage() {
             <p className="text-gray-500 text-sm mt-1">Clássicas</p>
           </Link>
         </div>
-      </section>
-
-      {/* CTA */}
-      <section className="bg-eliteBlackSoft py-16">
-        <div className="container mx-auto px-4 text-center">
+        {/* CTA junto */}
+        <div className="bg-eliteBlackSoft rounded-2xl py-12 px-4 text-center max-w-2xl mx-auto">
           <h2 className="font-heading text-2xl text-white mb-4">
             Não encontrou o que procura?
           </h2>

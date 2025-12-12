@@ -1,0 +1,4 @@
+// Arquivo da logo original para uso no site
+// Salve esta imagem em: src/assets/logo-original.png
+// Exemplo de uso:
+// <img src={require('../../assets/logo-original.png')} alt="Logo Camisa de Elite" />

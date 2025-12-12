@@ -1,3 +1,14 @@
+
+  // Tabela de medidas (baseada na imagem fornecida)
+  const MEASURES = {
+    P:    { comprimento: '69-71', largura: '53-55', altura: '162-170', peso: '50-62' },
+    M:    { comprimento: '71-73', largura: '55-57', altura: '170-176', peso: '62-78' },
+    G:    { comprimento: '73-75', largura: '57-58', altura: '176-182', peso: '78-83' },
+    XL:   { comprimento: '75-78', largura: '58-60', altura: '182-190', peso: '83-90' },
+    '2XL':{ comprimento: '78-81', largura: '60-62', altura: '190-195', peso: '90-97' },
+    '3XL':{ comprimento: '81-83', largura: '62-64', altura: '195-197', peso: '97-104' },
+    '4XL':{ comprimento: '83-85', largura: '64-65', altura: '197-200', peso: '104-110' },
+  };
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProduct } from '../../hooks/useProduct';
@@ -5,7 +16,7 @@ import { useCart } from '../../hooks/useCart';
 import { ProductGallery, Button, Spinner } from '../../components';
 
 // Ordem dos tamanhos para exibição
-const SIZE_ORDER = ['P', 'M', 'G', 'GG', 'XG'];
+const SIZE_ORDER = ['P', 'M', 'G', 'XL', '2XL', '3XL', '4XL'];
 
 // Componente para exibir estrelas
 function StarRating({ rating, size = 'md' }) {
@@ -159,6 +170,47 @@ export function ProductPage() {
                 Apenas {stock[selectedSize]} unidade(s) em estoque
               </p>
             )}
+
+            {/* Detalhes do tamanho selecionado */}
+            {selectedSize && MEASURES[selectedSize] && (
+              <div className="mt-4 bg-eliteBlackSoft rounded-lg p-4 border border-eliteGold/20">
+                <h4 className="font-semibold text-eliteGold mb-2">Medidas do tamanho {selectedSize}</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                  <div><span className="text-gray-400">Comprimento:</span><br/><span className="text-white">{MEASURES[selectedSize].comprimento} cm</span></div>
+                  <div><span className="text-gray-400">Largura:</span><br/><span className="text-white">{MEASURES[selectedSize].largura} cm</span></div>
+                  <div><span className="text-gray-400">Altura:</span><br/><span className="text-white">{MEASURES[selectedSize].altura} cm</span></div>
+                  <div><span className="text-gray-400">Peso:</span><br/><span className="text-white">{MEASURES[selectedSize].peso} kg</span></div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Considerar margem de erro de 1-3 cm em cada medida.</p>
+              </div>
+            )}
+
+            {/* Tabela completa de medidas */}
+            <div className="mt-6 overflow-x-auto">
+              <table className="min-w-full text-xs text-center border border-eliteGold/20 rounded-lg bg-eliteBlackSoft">
+                <thead>
+                  <tr className="bg-eliteGold/10 text-eliteGold">
+                    <th className="p-2">Tamanho</th>
+                    <th className="p-2">Comprimento (cm)</th>
+                    <th className="p-2">Largura (cm)</th>
+                    <th className="p-2">Altura (cm)</th>
+                    <th className="p-2">Peso (kg)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(MEASURES).map(([size, m]) => (
+                    <tr key={size} className="border-t border-eliteGold/10">
+                      <td className="p-2 font-bold text-eliteGold">{size}</td>
+                      <td className="p-2 text-white">{m.comprimento}</td>
+                      <td className="p-2 text-white">{m.largura}</td>
+                      <td className="p-2 text-white">{m.altura}</td>
+                      <td className="p-2 text-white">{m.peso}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-xs text-gray-500 mt-2">Considerar margem de erro de 1-3 cm em cada medida.</p>
+            </div>
           </div>
 
           {/* Adicionar ao carrinho */}

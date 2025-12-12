@@ -32,6 +32,7 @@ import { ProductsAdminPage } from './pages/Admin/ProductsAdminPage';
 import { OrdersAdminPage } from './pages/Admin/OrdersAdminPage';
 import { ReviewsAdminPage } from './pages/Admin/ReviewsAdminPage';
 import { UsersAdminPage } from './pages/Admin/UsersAdminPage';
+import { ShippingAdminPage } from './pages/Admin/ShippingAdminPage';
 
 export function App() {
   return (
@@ -78,6 +79,7 @@ export function App() {
               <Route path="pedidos" element={<OrdersAdminPage />} />
               <Route path="avaliacoes" element={<ReviewsAdminPage />} />
               <Route path="usuarios" element={<UsersAdminPage />} />
+              <Route path="frete" element={<ShippingAdminPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

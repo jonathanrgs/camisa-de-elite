@@ -30,7 +30,6 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-gray-400">
               <li><Link to="/termos" className="hover:text-eliteGold transition-colors">Termos de Uso</Link></li>
               <li><Link to="/privacidade" className="hover:text-eliteGold transition-colors">Política de Privacidade</Link></li>
-              <li><span className="text-gray-500">Licença MIT</span></li>
             </ul>
           </div>
 

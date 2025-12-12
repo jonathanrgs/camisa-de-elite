@@ -38,15 +38,21 @@ export function Header() {
     )},
   ];
   
+  // Detecta se está na home
+  const isHome = location.pathname === '/';
+
+  // Header: transparente só na home no topo, escuro e menor ao rolar
+  const headerBase = 'sticky top-0 z-50';
+  const headerBg = 'bg-eliteBlack';
+  const headerBorder = 'border-b border-eliteGold/10';
+  // Altura fixa padrão
+  const headerHeight = 'h-24 lg:h-28 pb-6';
+
   return (
     <>
-      <header className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-eliteBlack/98 backdrop-blur-lg shadow-lg shadow-black/20' 
-          : 'bg-eliteBlack/95 backdrop-blur'
-      } border-b border-eliteGold/10`}>
+      <header className={`${headerBase} ${headerBg} ${headerBorder} ${headerHeight}`}>  
         {/* Top bar - apenas desktop */}
-        <div className="hidden lg:block bg-gradient-to-r from-eliteGold/10 via-eliteGold/5 to-eliteGold/10 border-b border-eliteGold/10">
+        <div className="hidden lg:block bg-gradient-to-r from-eliteGold/10 via-eliteGold/5 to-eliteGold/10">
           <div className="container mx-auto px-4 py-1.5 flex items-center justify-between text-xs">
             <div className="flex items-center gap-4 text-gray-400">
               <span className="flex items-center gap-1">
@@ -67,10 +73,10 @@ export function Header() {
 
         {/* Main header */}
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+          <div className={`flex items-center justify-between ${headerHeight}`}> 
             {/* Logo */}
-            <Link to="/" className="logo-hover group flex items-center gap-3">
-              <Logo size="md" />
+            <Link to="/" className="logo-hover group flex items-center gap-2">
+              <Logo size="sm" />
             </Link>
 
             {/* Nav Desktop - Centro */}

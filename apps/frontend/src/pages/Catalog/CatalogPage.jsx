@@ -4,12 +4,25 @@ import { useProducts } from '../../hooks/useProducts';
 import { ProductGrid } from '../../components';
 
 // Componente de dropdown customizado
+import { useRef } from 'react';
 function FilterDropdown({ label, value, options, onChange, icon }) {
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const selectedOption = options.find(opt => opt.value === value) || options[0];
 
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -25,35 +38,31 @@ function FilterDropdown({ label, value, options, onChange, icon }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      
       {isOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden min-w-[200px] animate-fade-in">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                className={`w-full text-left px-4 py-2.5 transition-colors flex items-center justify-between ${
-                  value === option.value 
-                    ? 'bg-eliteGold/10 text-eliteGold' 
-                    : 'text-gray-300 hover:bg-white/5'
-                }`}
-              >
-                {option.label}
-                {value === option.value && (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </button>
-            ))}
-          </div>
-        </>
+        <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden min-w-[200px] animate-fade-in">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-4 py-2.5 transition-colors flex items-center justify-between ${
+                value === option.value 
+                  ? 'bg-eliteGold/10 text-eliteGold' 
+                  : 'text-gray-300 hover:bg-white/5'
+              }`}
+            >
+              {option.label}
+              {value === option.value && (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -155,6 +164,16 @@ export function CatalogPage() {
               `${pagination?.total || 0} produtos encontrados`
             )}
           </p>
+          {/* <button 
+            onClick={handleClearFilters}
+            className="mt-4 text-sm text-gray-400 hover:text-white flex items-center gap-1 transition-colors border border-gray-700 hover:border-eliteGold px-3 py-1.5 rounded-lg"
+            type="button"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Redefinir filtro
+          </button> */}
         </div>
       </div>
 

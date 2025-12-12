@@ -13,7 +13,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        heading: ['Playfair Display', 'Inter', 'sans-serif'],
+        heading: ['Inter', 'sans-serif'],
         subheading: ['Inter', 'sans-serif'],
         body: ['Inter', 'sans-serif']
       },

@@ -65,21 +65,62 @@ export function AboutPage() {
           </div>
         </section>
 
-        {/* Tamanhos */}
+        {/* Tabela de Medidas */}
         <section className="card">
-          <h2 className="text-xl font-semibold text-white mb-4">Tamanhos Disponíveis</h2>
-          <div className="flex flex-wrap gap-3 justify-center">
-            {['P', 'M', 'G', 'GG', 'XG'].map(size => (
-              <div 
-                key={size}
-                className="w-16 h-16 rounded-lg border-2 border-eliteGold/40 flex items-center justify-center font-bold text-eliteGold"
-              >
-                {size}
-              </div>
-            ))}
+          <h2 className="text-xl font-semibold text-white mb-4">Tabela de Medidas</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-xs text-center border border-eliteGold/20 rounded-lg bg-eliteBlackSoft">
+              <thead>
+                <tr className="bg-eliteGold/10 text-eliteGold">
+                  <th className="p-2">Tamanho</th>
+                  <th className="p-2">Comprimento (cm)</th>
+                  <th className="p-2">Largura (cm)</th>
+                  <th className="p-2">Altura (cm)</th>
+                  <th className="p-2">Peso (kg)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t border-eliteGold/10">
+                  <td className="p-2 font-bold text-eliteGold">P</td>
+                  <td className="p-2 text-white">69-71</td>
+                  <td className="p-2 text-white">53-55</td>
+                  <td className="p-2 text-white">162-170</td>
+                  <td className="p-2 text-white">50-62</td>
+                </tr>
+                <tr className="border-t border-eliteGold/10">
+                  <td className="p-2 font-bold text-eliteGold">M</td>
+                  <td className="p-2 text-white">71-73</td>
+                  <td className="p-2 text-white">55-57</td>
+                  <td className="p-2 text-white">170-176</td>
+                  <td className="p-2 text-white">62-78</td>
+                </tr>
+                <tr className="border-t border-eliteGold/10">
+                  <td className="p-2 font-bold text-eliteGold">G</td>
+                  <td className="p-2 text-white">73-75</td>
+                  <td className="p-2 text-white">57-58</td>
+                  <td className="p-2 text-white">176-182</td>
+                  <td className="p-2 text-white">78-83</td>
+                </tr>
+                <tr className="border-t border-eliteGold/10">
+                  <td className="p-2 font-bold text-eliteGold">GG</td>
+                  <td className="p-2 text-white">75-78</td>
+                  <td className="p-2 text-white">58-60</td>
+                  <td className="p-2 text-white">182-190</td>
+                  <td className="p-2 text-white">83-90</td>
+                </tr>
+                <tr className="border-t border-eliteGold/10">
+                  <td className="p-2 font-bold text-eliteGold">XG</td>
+                  <td className="p-2 text-white">78-81</td>
+                  <td className="p-2 text-white">60-62</td>
+                  <td className="p-2 text-white">190-195</td>
+                  <td className="p-2 text-white">90-97</td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="text-xs text-gray-500 mt-2 text-center">Considerar margem de erro de 1-3 cm em cada medida.</p>
           </div>
           <p className="text-center text-gray-400 text-sm mt-4">
-            Consulte a disponibilidade de cada tamanho na página do produto
+            Consulte a disponibilidade de cada tamanho na página do produto.
           </p>
         </section>
 

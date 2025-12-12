@@ -1,3 +1,19 @@
+// Esconde as setas do input type number para melhor UX
+const style = document.createElement('style');
+style.innerHTML = `
+  input.hide-arrows::-webkit-outer-spin-button,
+  input.hide-arrows::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input.hide-arrows[type=number] {
+    -moz-appearance: textfield;
+  }
+`;
+if (typeof window !== 'undefined' && !document.getElementById('hide-arrows-style')) {
+  style.id = 'hide-arrows-style';
+  document.head.appendChild(style);
+}
 import { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 
@@ -19,7 +35,7 @@ export function ProductsAdminPage() {
     city: '',
     season: '',
     images: [''],
-    stock: { P: 0, M: 0, G: 0, GG: 0, XG: 0 }
+    stock: { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }
   });
   const [message, setMessage] = useState({ type: '', text: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -69,7 +85,7 @@ export function ProductsAdminPage() {
       city: '',
       season: '2024',
       images: [''],
-      stock: { P: 10, M: 15, G: 15, GG: 10, XG: 5 }
+      stock: { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }
     });
     setShowForm(true);
   };
@@ -89,7 +105,7 @@ export function ProductsAdminPage() {
       city: product.city || '',
       season: product.season || '',
       images: product.images.length > 0 ? product.images : [''],
-      stock: product.inventory?.stock || { P: 0, M: 0, G: 0, GG: 0, XG: 0 }
+      stock: product.inventory?.stock || { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }
     });
     setShowForm(true);
   };
@@ -124,7 +140,7 @@ export function ProductsAdminPage() {
 
   const handleDelete = async (id) => {
     if (!confirm('Tem certeza que deseja excluir este produto?')) return;
-    
+
     try {
       await adminService.deleteProduct(id);
       setMessage({ type: 'success', text: 'Produto excluído!' });
@@ -149,7 +165,7 @@ export function ProductsAdminPage() {
     setFormData({ ...formData, images: newImages.length > 0 ? newImages : [''] });
   };
 
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.team.toLowerCase().includes(search.toLowerCase())
   );
@@ -179,11 +195,10 @@ export function ProductsAdminPage() {
       </div>
 
       {message.text && (
-        <div className={`p-3 rounded-lg ${
-          message.type === 'success' 
-            ? 'bg-green-500/10 border border-green-500/30 text-green-400'
-            : 'bg-red-500/10 border border-red-500/30 text-red-400'
-        }`}>
+        <div className={`p-3 rounded-lg ${message.type === 'success'
+          ? 'bg-green-500/10 border border-green-500/30 text-green-400'
+          : 'bg-red-500/10 border border-red-500/30 text-red-400'
+          }`}>
           {message.text}
         </div>
       )}
@@ -201,8 +216,8 @@ export function ProductsAdminPage() {
 
       {/* Modal de formulário com abas */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-b from-gray-900 to-gray-950 rounded-2xl w-full max-w-3xl border border-gray-800 shadow-2xl">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ marginTop: 0 }}>
+          <div className="bg-gradient-to-b from-gray-900 to-gray-950 rounded-2xl w-full max-w-3xl border border-gray-800 shadow-2xl" style={{ marginTop: 0 }}>
             {/* Header do modal */}
             <div className="flex items-center justify-between p-5 border-b border-gray-800">
               <div className="flex items-center gap-3">
@@ -243,6 +258,7 @@ export function ProductsAdminPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                     </svg>
                   ),
+
                   label: 'Básico'
                 },
                 {
@@ -277,18 +293,17 @@ export function ProductsAdminPage() {
                   key={index}
                   type="button"
                   onClick={() => setActiveTab(index)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-all border-b-2 ${
-                    activeTab === index
-                      ? 'border-eliteGold text-eliteGold bg-eliteGold/5'
-                      : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-white/5'
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-all border-b-2 ${activeTab === index
+                    ? 'border-eliteGold text-eliteGold bg-eliteGold/5'
+                    : 'border-transparent text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                    }`}
                 >
                   {tab.icon}
                   <span className="hidden sm:inline">{tab.label}</span>
                 </button>
               ))}
             </div>
-            
+
             <form onSubmit={handleSubmit}>
               {/* Conteúdo das abas */}
               <div className="p-6">
@@ -476,143 +491,42 @@ export function ProductsAdminPage() {
 
                 {/* Aba 3: Estoque */}
                 {activeTab === 3 && (
-                  <div className="space-y-5 animate-fade-in">
-                    <p className="text-sm text-gray-400">Defina a quantidade em estoque para cada tamanho</p>
-                    
-                    <div className="grid grid-cols-5 gap-4">
-                      {['P', 'M', 'G', 'GG', 'XG'].map((size) => {
-                        const stockValue = formData.stock[size];
-                        const stockColor = stockValue > 10 ? 'border-emerald-500/50' 
-                          : stockValue > 0 ? 'border-yellow-500/50' 
-                          : 'border-gray-700';
-                        const statusColor = stockValue > 10 ? 'text-emerald-400' 
-                          : stockValue > 0 ? 'text-yellow-400' 
-                          : 'text-gray-500';
-                        
-                        const increment = () => setFormData({
-                          ...formData,
-                          stock: { ...formData.stock, [size]: stockValue + 1 }
-                        });
-                        
-                        const decrement = () => setFormData({
-                          ...formData,
-                          stock: { ...formData.stock, [size]: Math.max(0, stockValue - 1) }
-                        });
-                        
+                  <div className="space-y-6 animate-fade-in">
+                    <p className="text-sm text-gray-400 mb-2">Defina a quantidade em estoque para cada tamanho</p>
+                    <div className="grid grid-cols-3 gap-6 w-full max-w-lg mx-auto">
+                      {['P', 'M', 'G', 'XL', '2XL', '3XL', '4XL'].map((size) => {
+                        const stockValue = formData.stock[size] || 0;
+                        const status = stockValue > 10 ? 'Bom' : 'Baixo';
+                        const statusColor = stockValue > 10 ? 'text-green-400' : 'text-yellow-400';
+                        const borderColor = stockValue > 10 ? 'border-green-500' : 'border-yellow-500';
                         return (
-                          <div key={size} className="space-y-2">
-                            <label className="block text-center">
-                              <span className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gray-800 text-white font-bold text-base border border-gray-700">
-                                {size}
-                              </span>
-                            </label>
-                            <div className={`flex items-center border ${stockColor} rounded-xl bg-gray-900/80 overflow-hidden`}>
-                              <button
-                                type="button"
-                                onClick={decrement}
-                                className="p-2.5 text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
-                              >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                                </svg>
-                              </button>
+                          <div key={size} className={`flex flex-col items-center gap-2 !mt-0 border-2 rounded-xl px-2 py-3 ${borderColor}`}>
+                            <span className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gray-800 text-white font-bold text-lg border border-eliteGold shadow-lg">{size}</span>
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={() => setFormData({ ...formData, stock: { ...formData.stock, [size]: Math.max(0, stockValue - 1) } })} className="px-2 py-1 rounded bg-gray-700 text-white hover:bg-gray-600 text-lg">-</button>
                               <input
                                 type="number"
                                 min="0"
-                                value={formData.stock[size]}
-                                onChange={(e) => setFormData({
-                                  ...formData,
-                                  stock: { ...formData.stock, [size]: parseInt(e.target.value) || 0 }
-                                })}
-                                className="w-full bg-transparent py-2.5 text-white text-center font-semibold text-lg outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                value={stockValue}
+                                onChange={e => setFormData({ ...formData, stock: { ...formData.stock, [size]: Math.max(0, Number(e.target.value)) } })}
+                                className="w-16 text-center bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-lg hide-arrows"
+                                style={{ MozAppearance: 'textfield', marginTop: 0 }}
+                                onWheel={e => e.target.blur()}
                               />
-                              <button
-                                type="button"
-                                onClick={increment}
-                                className="p-2.5 text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
-                              >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                              </button>
+                              <button type="button" onClick={() => setFormData({ ...formData, stock: { ...formData.stock, [size]: stockValue + 1 } })} className="px-2 py-1 rounded bg-gray-700 text-white hover:bg-gray-600 text-lg">+</button>
                             </div>
-                            <p className={`text-center text-xs font-medium ${statusColor}`}>
-                              {stockValue > 10 ? 'Bom' : stockValue > 0 ? 'Baixo' : 'Zerado'}
-                            </p>
+                            <span className={`text-xs font-semibold mt-1 ${statusColor}`}>{status}</span>
                           </div>
                         );
                       })}
                     </div>
-                    
-                    <div className="flex justify-between items-center p-4 bg-gray-800/50 rounded-xl border border-gray-700">
-                      <span className="text-gray-300">Total em estoque:</span>
-                      <span className="text-2xl font-bold text-white">
-                        {Object.values(formData.stock).reduce((a, b) => a + b, 0)} <span className="text-sm font-normal text-gray-400">unidades</span>
-                      </span>
+                    {/* Total em estoque */}
+                    <div className="mt-6 bg-gray-900/80 border border-gray-700 rounded-xl px-6 py-4 flex items-center justify-between max-w-lg mx-auto">
+                      <span className="text-gray-300 text-base font-medium">Total em estoque:</span>
+                      <span className="text-2xl font-bold text-eliteGold">{Object.values(formData.stock).reduce((a, b) => a + Number(b), 0)} <span className="text-base text-gray-400 font-normal">unidades</span></span>
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Footer do modal */}
-              <div className="flex items-center justify-between gap-3 p-5 border-t border-gray-800 bg-gray-900/50">
-                <div className="flex gap-1">
-                  {[0, 1, 2, 3].map((i) => (
-                    <div 
-                      key={i} 
-                      className={`w-2 h-2 rounded-full transition-all ${activeTab === i ? 'bg-eliteGold w-6' : 'bg-gray-700'}`} 
-                    />
-                  ))}
-                </div>
-                <div className="flex gap-3">
-                  {activeTab > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab(activeTab - 1)}
-                      className="px-5 py-2.5 text-gray-400 hover:text-white transition-colors flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      Voltar
-                    </button>
-                  )}
-                  {activeTab < 3 ? (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab(activeTab + 1)}
-                      className="bg-eliteGold hover:bg-eliteGoldLight text-eliteBlack font-semibold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2"
-                    >
-                      Próximo
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  ) : (
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="bg-eliteGold hover:bg-eliteGoldLight disabled:opacity-50 disabled:cursor-not-allowed text-eliteBlack font-semibold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-eliteGold/20"
-                    >
-                      {submitting ? (
-                        <>
-                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Salvando...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {editingProduct ? 'Atualizar' : 'Criar Produto'}
-                        </>
-                      )}
-                    </button>
-                  )}
-                </div>
               </div>
             </form>
           </div>
@@ -634,10 +548,9 @@ export function ProductsAdminPage() {
             </thead>
             <tbody className="divide-y divide-gray-800">
               {filteredProducts.map((product) => {
-                const totalStock = product.inventory 
+                const totalStock = product.inventory
                   ? Object.values(product.inventory.stock).reduce((a, b) => a + b, 0)
                   : 0;
-                
                 return (
                   <tr key={product.id} className="hover:bg-gray-800/30">
                     <td className="px-4 py-3">
@@ -684,11 +597,10 @@ export function ProductsAdminPage() {
             </tbody>
           </table>
         </div>
-        
         {filteredProducts.length === 0 && (
           <p className="text-gray-400 text-center py-8">Nenhum produto encontrado</p>
         )}
       </div>
-    </div>
+  </div>
   );
 }
