@@ -1,3 +1,5 @@
+import logo from '../../assets/logo-original.png';
+
 export function Logo({ className = '', size = 'md', showText = true }) {
   const sizes = {
     sm: { logo: 'w-8 h-10', text: 'text-sm' },
@@ -10,9 +12,8 @@ export function Logo({ className = '', size = 'md', showText = true }) {
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      {/* Logo original como imagem */}
       <img
-        src={import.meta.env.BASE_URL + 'src/assets/logo-original.png'}
+        src={logo}
         alt="Logo Camisa de Elite"
         className={s.logo + ' object-contain'}
         style={{ maxHeight: '64px', maxWidth: '64px' }}
