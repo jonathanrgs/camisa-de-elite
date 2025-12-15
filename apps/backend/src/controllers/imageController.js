@@ -1,25 +1,25 @@
-// GET /api/admin/media - Lista todas as imagens enviadas (mídia geral)
-
 import { prisma } from '../config/prisma.js';
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import cloudinary, { deleteImage, getPublicIdFromUrl } from '../config/cloudinary.js';
 
-export const listAllMedia = async (req, res) => {
-  try {
-    // Busca até 100 imagens da pasta do projeto (ajuste a pasta se necessário)
-    const result = await cloudinary.search
-      .expression('folder:camisa-de-elite/*')
-      .sort_by('created_at','desc')
-      .max_results(100)
-      .execute();
-    const images = result.resources.map(img => img.secure_url);
-    res.json({ images });
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao buscar mídia' });
-  }
-};
-
 export const imageController = {
+  // GET /api/admin/media - Lista todas as imagens enviadas (mídia geral)
+  async listAllMedia(req, res) {
+    try {
+      // Busca até 100 imagens da pasta do projeto
+      const result = await cloudinary.search
+        .expression('folder:camisa-de-elite/*')
+        .sort_by('created_at', 'desc')
+        .max_results(100)
+        .execute();
+      const images = result.resources.map(img => img.secure_url);
+      return successResponse(res, { images });
+    } catch (err) {
+      console.error('Erro ao buscar mídia do Cloudinary:', err);
+      return errorResponse(res, 'Erro ao buscar mídia', 'MEDIA_ERROR', 500);
+    }
+  },
+
   // POST /api/admin/products/:id/images - Upload de imagens para um produto
   async uploadProductImages(req, res) {
     const { id } = req.params;

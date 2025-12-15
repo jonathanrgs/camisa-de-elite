@@ -12,22 +12,33 @@ export function MediaManager({ onSelect }) {
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  // Busca imagens já hospedadas (pode ser do backend ou Cloudinary direto)
-  useEffect(() => {
-    async function fetchImages() {
-      setLoading(true);
-      setError('');
-      try {
-        // Aqui você pode trocar para uma rota do backend que retorna as imagens do Cloudinary
-        const res = await fetch('/api/admin/media');
-        const data = await res.json();
-        setImages(data.images || []);
-      } catch (err) {
-        setError('Erro ao buscar imagens');
-      } finally {
-        setLoading(false);
+  // Busca imagens já hospedadas no Cloudinary
+  const fetchImages = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/admin/media', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (!res.ok) {
+        throw new Error('Erro ao buscar imagens');
       }
+      
+      const data = await res.json();
+      setImages(data.data?.images || data.images || []);
+    } catch (err) {
+      console.error('Erro ao buscar imagens:', err);
+      setError('Erro ao buscar imagens');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchImages();
   }, []);
 
@@ -40,23 +51,35 @@ export function MediaManager({ onSelect }) {
     try {
       const formData = new FormData();
       formData.append('image', file);
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
         body: formData,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${token}`
         }
       });
       const data = await res.json();
-      if (data.url) {
-        setImages((prev) => [data.url, ...prev]);
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Erro ao enviar imagem');
+      }
+      
+      // Pega a URL da resposta (pode vir em data.url ou data.data.url)
+      const imageUrl = data.data?.url || data.url;
+      
+      if (imageUrl) {
+        setImages((prev) => [imageUrl, ...prev]);
       } else {
         setError('Erro ao enviar imagem');
       }
     } catch (err) {
-      setError('Erro ao enviar imagem');
+      console.error('Erro no upload:', err);
+      setError(err.message || 'Erro ao enviar imagem');
     } finally {
       setUploading(false);
+      // Limpa o input para permitir reenviar o mesmo arquivo
+      e.target.value = '';
     }
   };
 
