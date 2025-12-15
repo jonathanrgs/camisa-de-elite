@@ -42,6 +42,10 @@ router.put('/products/:id/images/reorder', asyncHandler(imageController.reorderP
 
 // Listar todas as mídias enviadas
 router.get('/media', asyncHandler(imageController.listAllMedia));
+// Deletar uma ou mais mídias
+router.delete('/media', asyncHandler(imageController.deleteMedia));
+// Renomear uma mídia
+router.put('/media/rename', asyncHandler(imageController.renameMedia));
 
 // Upload genérico (retorna só a URL)
 router.post('/upload', handleSingleUpload, asyncHandler(imageController.uploadSingle));

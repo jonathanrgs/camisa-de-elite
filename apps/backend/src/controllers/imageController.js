@@ -19,7 +19,53 @@ export const imageController = {
       return errorResponse(res, 'Erro ao buscar mídia', 'MEDIA_ERROR', 500);
     }
   },
+// DELETE /api/admin/media - Deletar uma ou mais imagens
+  async deleteMedia(req, res) {
+    const { urls } = req.body; // array de URLs
+    if (!urls || !Array.isArray(urls) || urls.length === 0) {
+      return errorResponse(res, 'URLs obrigatórias', 'NO_URLS', 400);
+    }
+    try {
+      const results = [];
+      for (const url of urls) {
+        const publicId = getPublicIdFromUrl(url);
+        if (publicId) {
+          await deleteImage(publicId);
+          results.push({ url, deleted: true });
+        } else {
+          results.push({ url, deleted: false });
+        }
+      }
+      return successResponse(res, { results });
+    } catch (err) {
+      return errorResponse(res, 'Erro ao deletar imagem', 'DELETE_ERROR', 500);
+    }
+  },
 
+  // PUT /api/admin/media/rename - Renomear uma imagem
+  async renameMedia(req, res) {
+    let { url, newName } = req.body;
+    if (!url || !newName) {
+      return errorResponse(res, 'URL e novo nome obrigatórios', 'RENAME_PARAMS', 400);
+    }
+    try {
+      // Permitir espaços e caracteres especiais no nome (Cloudinary faz encode)
+      newName = decodeURIComponent(newName).replace(/\s+/g, ' ').trim();
+      const publicId = getPublicIdFromUrl(url);
+      if (!publicId) return errorResponse(res, 'publicId não encontrado', 'NO_PUBLICID', 400);
+      const folder = publicId.substring(0, publicId.lastIndexOf('/'));
+      const newPublicId = folder ? `${folder}/${newName}` : newName;
+      await cloudinary.uploader.rename(publicId, newPublicId);
+      // Monta nova URL (Cloudinary faz encode dos espaços para %20)
+      const urlParts = url.split('/');
+      urlParts[urlParts.length - 1] = encodeURIComponent(newName);
+      const newUrl = urlParts.join('/');
+      return successResponse(res, { oldUrl: url, newUrl });
+    } catch (err) {
+      return errorResponse(res, 'Erro ao renomear imagem', 'RENAME_ERROR', 500);
+    }
+  },
+  
   // POST /api/admin/products/:id/images - Upload de imagens para um produto
   async uploadProductImages(req, res) {
     const { id } = req.params;
