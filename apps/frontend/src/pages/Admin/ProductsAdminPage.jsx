@@ -117,6 +117,7 @@ export function ProductsAdminPage() {
   };
 
   const handleSubmit = async (e) => {
+    console.log('[DEBUG] handleSubmit chamado', formData);
     e.preventDefault();
     setSubmitting(true);
     setMessage({ type: '', text: '' });
@@ -135,18 +136,69 @@ export function ProductsAdminPage() {
       return;
     }
 
-    const data = {
-      ...formData,
-      price: parseFloat(formData.price),
-      images: formData.images.filter(img => img.trim() !== '')
-    };
+    // Separar imagens já hospedadas (URL) das novas (DataURL)
+    const isUrl = (img) => typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'));
+    // Filtra imagens válidas (remove null, string vazia, undefined)
+    const cleanImages = (arr) => (arr || []).filter(img => !!img && img !== 'null' && img !== null && img !== undefined && img.trim && img.trim() !== '');
+    const existingImages = cleanImages(formData.images).filter(img => isUrl(img));
+    const newImagesDataUrl = cleanImages(formData.images).filter(img => !isUrl(img) && img && img.startsWith('data:image/'));
+    let uploadedUrls = [];
 
     try {
       if (editingProduct) {
+        // Edição: upload das novas imagens (se houver) e update normal
+        for (let dataUrl of newImagesDataUrl) {
+          const file = dataURLtoFile(dataUrl, 'imagem.jpg');
+          const result = await import('../../services/imageService').then(mod => mod.imageService.uploadSingle(file));
+          uploadedUrls.push(result.url);
+        }
+        const data = {
+          ...formData,
+          price: parseFloat(formData.price),
+          images: cleanImages([...existingImages, ...uploadedUrls])
+        };
         await adminService.updateProduct(editingProduct.id, data);
         setMessage({ type: 'success', text: 'Produto atualizado!' });
       } else {
-        await adminService.createProduct(data);
+        // Criação: 1) cria produto sem imagens, 2) faz upload das imagens vinculando ao produto
+        const dataSemImagens = {
+          ...formData,
+          price: parseFloat(formData.price),
+          images: []
+        };
+        const produtoCriado = await adminService.createProduct(dataSemImagens);
+        const productId = produtoCriado?.data?.id || produtoCriado?.id;
+        if (!productId) throw new Error('Erro ao criar produto. ID não retornado.');
+        // Upload das imagens (arquivos)
+        // Sempre envie todas as imagens do preview local para o endpoint de vínculo
+        const files = await Promise.all(cleanImages(formData.images).map((img, idx) => {
+          if (img && img.startsWith('data:image/')) {
+            return Promise.resolve(dataURLtoFile(img, `imagem${idx}.jpg`));
+          }
+          return null;
+        }));
+        const validFiles = files.filter(f => !!f);
+        let imagensVinculadas = [];
+        if (validFiles.length > 0) {
+          console.log('[DEBUG] Enviando arquivos para uploadProductImages:', validFiles);
+          const result = await import('../../services/imageService').then(mod => mod.imageService.uploadProductImages(productId, validFiles));
+          console.log('[DEBUG] Retorno do uploadProductImages:', result);
+          // Garante que só links do Cloudinary sejam usados
+          imagensVinculadas = Array.isArray(result.images) ? result.images.filter(isUrl) : [];
+        }
+        // URLs manuais (apenas links válidos)
+        const manualUrls = cleanImages(formData.images).filter(img => isUrl(img));
+        // Nunca salva DataURL no banco
+        const imagensParaSalvar = [...imagensVinculadas, ...manualUrls];
+        console.log('[DEBUG] URLs manuais:', manualUrls);
+        console.log('[DEBUG] Imagens finais para salvar no produto:', imagensParaSalvar);
+        // Sempre faz updateProduct para garantir vínculo, mesmo se não houver arquivos
+        const dataUpdate = {
+          ...formData,
+          price: parseFloat(formData.price),
+          images: imagensParaSalvar
+        };
+        await adminService.updateProduct(productId, dataUpdate);
         setMessage({ type: 'success', text: 'Produto criado!' });
       }
       setShowForm(false);
@@ -157,6 +209,13 @@ export function ProductsAdminPage() {
       setSubmitting(false);
     }
   };
+
+  // Utilitário para converter DataURL em File
+  function dataURLtoFile(dataurl, filename) {
+    const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    for (let i = 0; i < n; i++) u8arr[i] = bstr.charCodeAt(i);
+    return new File([u8arr], filename, { type: mime });
+  }
 
   const handleDelete = async (id) => {
     if (!confirm('Tem certeza que deseja excluir este produto?')) return;

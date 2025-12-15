@@ -39,6 +39,10 @@ router.post('/products/:id/images', handleProductUpload, asyncHandler(imageContr
 router.delete('/products/:id/images', asyncHandler(imageController.deleteProductImage));
 router.put('/products/:id/images/reorder', asyncHandler(imageController.reorderProductImages));
 
+
+// Listar todas as mídias enviadas
+router.get('/media', asyncHandler(imageController.listAllMedia));
+
 // Upload genérico (retorna só a URL)
 router.post('/upload', handleSingleUpload, asyncHandler(imageController.uploadSingle));
 

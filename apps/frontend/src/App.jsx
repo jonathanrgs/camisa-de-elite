@@ -33,6 +33,7 @@ import { OrdersAdminPage } from './pages/Admin/OrdersAdminPage';
 import { ReviewsAdminPage } from './pages/Admin/ReviewsAdminPage';
 import { UsersAdminPage } from './pages/Admin/UsersAdminPage';
 import { ShippingAdminPage } from './pages/Admin/ShippingAdminPage';
+import { MediaManagerPage } from './pages/Admin/MediaManager';
 
 export function App() {
   return (
@@ -76,6 +77,7 @@ export function App() {
             }>
               <Route index element={<DashboardPage />} />
               <Route path="produtos" element={<ProductsAdminPage />} />
+              <Route path="midia" element={<MediaManagerPage />} />
               <Route path="pedidos" element={<OrdersAdminPage />} />
               <Route path="avaliacoes" element={<ReviewsAdminPage />} />
               <Route path="usuarios" element={<UsersAdminPage />} />
