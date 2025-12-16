@@ -5,7 +5,7 @@ import { Spinner } from '../../components';
 import { CONFIG } from '../../config';
 import { useAuth } from '../../hooks/useAuth';
 
-const FRETE = 15;
+
 
 // Fallback: Camisa do Brasil
 const FALLBACK_IMAGE = 'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp';
@@ -318,11 +318,11 @@ export function OrderPage() {
             </div>
             <div className="flex justify-between text-gray-400 text-sm">
               <span>Frete</span>
-              <span>R$ {FRETE.toFixed(2).replace('.', ',')}</span>
+              <span>R$ {(order?.shippingAmount ?? 0).toFixed(2).replace('.', ',')}</span>
             </div>
             <div className="flex justify-between text-white font-bold text-lg pt-2">
               <span>Total</span>
-              <span className="text-eliteGold">R$ {(subtotal + FRETE).toFixed(2).replace('.', ',')}</span>
+              <span className="text-eliteGold">R$ {(subtotal + (order?.shippingAmount ?? 0)).toFixed(2).replace('.', ',')}</span>
             </div>
           </div>
         </div>

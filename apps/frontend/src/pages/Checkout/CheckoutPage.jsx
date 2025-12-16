@@ -278,7 +278,9 @@ export function CheckoutPage() {
           size: item.size,
           quantity: item.quantity
         })),
-        couponCode: appliedCoupon?.code || undefined
+
+        couponCode: appliedCoupon?.code || undefined,
+        shippingAmount: finalShipping
       };
 
       const response = await orderService.checkout(orderPayload);

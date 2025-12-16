@@ -96,13 +96,13 @@ const couponController = {
     if (!coupon) return res.status(400).json({ error: 'Cupom não informado.' });
     let discount = 0;
     let newShipping = shipping;
-    let total = cartTotal;
+    let total = Number(cartTotal);
     if (coupon.type === 'percent') {
-      discount = (cartTotal * coupon.value) / 100;
-      total = cartTotal - discount;
+      discount = (Number(cartTotal) * Number(coupon.value)) / 100;
+      total = Number(cartTotal) - discount;
     } else if (coupon.type === 'fixed') {
-      discount = coupon.value;
-      total = Math.max(0, cartTotal - discount);
+      discount = Number(coupon.value);
+      total = Math.max(0, Number(cartTotal) - discount);
     } else if (coupon.type === 'free_shipping') {
       newShipping = 0;
     }

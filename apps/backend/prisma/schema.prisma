@@ -154,7 +154,9 @@ model Order {
   status       String   @default("PENDENTE") // PENDENTE, CONFIRMADO, EM_ROTA, ENVIADO, ENTREGUE, CANCELADO
   couponId     String?
   coupon       Coupon?  @relation(fields: [couponId], references: [id])
-  
+
+  shippingAmount Float? // Valor do frete do pedido
+
   // Dados de entrega
   address      String?
   neighborhood String?
@@ -163,7 +165,7 @@ model Order {
   city         String?
   state        String?
   zipCode      String?
-  
+
   notes        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

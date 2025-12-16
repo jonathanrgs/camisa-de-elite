@@ -6,7 +6,7 @@ import { successResponse, paginatedResponse, errorResponse } from '../utils/apiR
 export const orderController = {
   // POST /api/checkout
   async checkout(req, res) {
-    const { customerName, customerPhone, customerEmail, items, address, neighborhood, number, complement, city, state, zipCode, notes, couponCode } = req.body;
+    const { customerName, customerPhone, customerEmail, items, address, neighborhood, number, complement, city, state, zipCode, notes, couponCode, shippingAmount } = req.body;
     // items: [{ productId, size, quantity, customName?, customNumber? }]
 
     if (!customerName || !customerPhone || !items || items.length === 0) {
@@ -97,6 +97,7 @@ export const orderController = {
         totalAmount,
         discountAmount: discountAmount > 0 ? discountAmount : null,
         discountedTotal: discountedTotal !== totalAmount ? discountedTotal : null,
+        shippingAmount: typeof shippingAmount === 'number' ? shippingAmount : (shippingAmount ? Number(shippingAmount) : null),
         address,
         neighborhood,
         number,
