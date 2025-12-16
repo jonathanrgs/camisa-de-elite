@@ -12,12 +12,19 @@ cloudinary.config({
 // Configuração do storage para produtos
 const productStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'camisa-de-elite/produtos',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    transformation: [
-      { width: 800, height: 1000, crop: 'limit', quality: 'auto:best' }
-    ],
+  params: async (req, file) => {
+    // Extrai o nome do arquivo sem a extensão
+    const originalName = file.originalname
+      ? file.originalname.replace(/\.[^/.]+$/, '')
+      : Date.now().toString();
+    return {
+      folder: 'camisa-de-elite/produtos',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+      public_id: originalName,
+      transformation: [
+        { width: 800, height: 1000, crop: 'limit', quality: 'auto:best' }
+      ],
+    };
   },
 });
 
@@ -55,11 +62,13 @@ export const getPublicIdFromUrl = (url) => {
     const parts = url.split('/');
     const uploadIndex = parts.indexOf('upload');
     if (uploadIndex === -1) return null;
-    
-    // Pega tudo depois de 'upload/v123/' e remove a extensão
+    // Pega tudo depois de 'upload/v123/' (incluindo extensão)
     const pathParts = parts.slice(uploadIndex + 2);
-    const fullPath = pathParts.join('/');
-    return fullPath.replace(/\.[^/.]+$/, ''); // Remove extensão
+    // NÃO decodifica, mantém exatamente como está na URL
+    let joined = pathParts.join('/');
+    // Remove a extensão do final, se houver
+    joined = joined.replace(/\.[^/.]+$/, '');
+    return joined;
   } catch (error) {
     return null;
   }

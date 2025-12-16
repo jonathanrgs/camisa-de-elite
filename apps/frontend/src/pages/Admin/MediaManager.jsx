@@ -105,7 +105,7 @@ export function MediaManager({ onSelect }) {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2" 
+        <div className="flex items-center gap-2"
           onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
           onDrop={e => {
             e.preventDefault();
@@ -132,7 +132,11 @@ export function MediaManager({ onSelect }) {
                     },
                     body: JSON.stringify({ urls: selected })
                   });
-                  if (!res.ok) throw new Error('Erro ao excluir imagens');
+                  if (!res.ok) {
+                    const data = await res.json();
+                    setError(data?.message || 'Erro ao excluir imagens');
+                    return;
+                  }
                   setImages(prev => prev.filter(img => !selected.includes(img)));
                   setSelected([]);
                 } catch (err) {
@@ -165,7 +169,7 @@ export function MediaManager({ onSelect }) {
       ) : filteredImages.length === 0 ? (
         <div className="text-gray-400 text-center py-12">Nenhuma mídia encontrada no sistema.</div>
       ) : (
-        <div className="grid gap-3 justify-start" style={{gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 0fr))'}}>
+        <div className="grid gap-3 justify-start" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 0fr))' }}>
           {filteredImages.map((img, idx) => {
             let fileName = img.split('/').pop()?.split('?')[0] || 'imagem';
             const isSelected = selected.includes(img);
@@ -203,14 +207,7 @@ export function MediaManager({ onSelect }) {
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 py-3 flex flex-col items-center gap-2">
                   <span className="block text-eliteGold text-base font-bold truncate w-full text-center drop-shadow" title={decodeURIComponent(fileName)}>{decodeURIComponent(fileName)}</span>
                   <div className="flex justify-center gap-3 w-full">
-                    <button
-                      className="flex-1 px-2 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition shadow"
-                      title="Renomear"
-                      onClick={() => {
-                        setRenaming(img);
-                        setRenameValue(fileName.replace(/\.[^/.]+$/, ''));
-                      }}
-                    >Renomear</button>
+                    {/* Botão de renomear desabilitado temporariamente devido a bug */}
                     <button
                       className="flex-1 px-2 py-2 rounded bg-red-600 hover:bg-red-500 text-white text-sm font-bold transition shadow"
                       title="Excluir"
@@ -248,7 +245,13 @@ export function MediaManager({ onSelect }) {
                       <input
                         className="px-3 py-2 rounded border border-gray-700 bg-black/40 text-gray-200 focus:outline-none focus:border-eliteGold text-base w-full"
                         value={renameValue}
-                        onChange={e => setRenameValue(e.target.value.replace(/[^\w\s.-]/g, ''))}
+                        onChange={e => {
+                          // Remove extensão e caracteres inválidos, decodifica espaços
+                          let val = e.target.value;
+                          val = val.replace(/\.[^/.]+$/, ''); // remove extensão
+                          val = val.replace(/[^\w\s.-]/g, ''); // só permite letras, números, espaço, . e -
+                          setRenameValue(val);
+                        }}
                         autoFocus
                         maxLength={80}
                         placeholder="Novo nome da imagem"
@@ -262,8 +265,9 @@ export function MediaManager({ onSelect }) {
                             setLoading(true);
                             setError('');
                             try {
-                              const ext = fileName.substring(fileName.lastIndexOf('.'));
                               const token = localStorage.getItem('token');
+                              const payload = { url: img, newName: renameValue.replace(/\.[^/.]+$/, '').replace(/\s+/g, ' ').trim() };
+                              console.log('[RENAME][FRONT] Enviando payload:', payload);
                               const res = await fetch('/api/admin/media/rename', {
                                 method: 'PUT',
                                 headers: {
@@ -271,9 +275,15 @@ export function MediaManager({ onSelect }) {
                                   Authorization: `Bearer ${token}`
                                 },
                                 // Envia o nome com espaços, mas backend deve tratar encode
-                                body: JSON.stringify({ url: img, newName: (renameValue + ext).replace(/\s+/g, ' ').trim() })
+                                // Envia o nome sem extensão, sem espaços extras, decodificado
+                                body: JSON.stringify(payload)
                               });
-                              if (!res.ok) throw new Error('Erro ao renomear imagem');
+
+                              if (!res.ok) {
+                                const data = await res.json();
+                                setError(data?.message || 'Erro ao renomear imagem');
+                                return;
+                              }
                               const data = await res.json();
                               setImages(prev => prev.map(u => u === img ? data.data?.newUrl || data.newUrl : u));
                               setRenaming(null);
@@ -293,18 +303,18 @@ export function MediaManager({ onSelect }) {
                   </div>
                 )}
                 {/* Botão de seleção individual removido para seleção múltipla */}
-                    {/* Botão de seleção múltipla para integração com ProductsAdminPage */}
-                    {onSelect && selected.length > 0 && (
-                      <div className="fixed bottom-6 left-0 right-0 flex justify-center z-[110] pointer-events-none">
-                        <button
-                          className="px-6 py-3 bg-eliteGold text-black font-bold rounded-xl shadow-lg border border-eliteGold/40 hover:bg-yellow-400 transition-all pointer-events-auto"
-                          style={{ minWidth: 220 }}
-                          onClick={() => onSelect(selected)}
-                        >
-                          Selecionar {selected.length} imagem{selected.length > 1 ? 's' : ''}
-                        </button>
-                      </div>
-                    )}
+                {/* Botão de seleção múltipla para integração com ProductsAdminPage */}
+                {onSelect && selected.length > 0 && (
+                  <div className="fixed bottom-6 left-0 right-0 flex justify-center z-[110] pointer-events-none">
+                    <button
+                      className="px-6 py-3 bg-eliteGold text-black font-bold rounded-xl shadow-lg border border-eliteGold/40 hover:bg-yellow-400 transition-all pointer-events-auto"
+                      style={{ minWidth: 220 }}
+                      onClick={() => onSelect(selected)}
+                    >
+                      Selecionar {selected.length} imagem{selected.length > 1 ? 's' : ''}
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

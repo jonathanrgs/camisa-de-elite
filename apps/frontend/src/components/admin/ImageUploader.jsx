@@ -1,11 +1,11 @@
-import { useState, useRef } from 'react';
-
 export function ImageUploader({ images = [], onImagesChange, onError }) {
   const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
   const fileInputRef = useRef(null);
 
   // Adiciona imagens ao preview local (DataURL)
-  const handleUpload = (files) => {
+  const handleUpload = async (files) => {
     if (!files || files.length === 0) return;
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     const maxSize = 5 * 1024 * 1024; // 5MB
@@ -22,14 +22,27 @@ export function ImageUploader({ images = [], onImagesChange, onError }) {
       return true;
     });
     if (validFiles.length === 0) return;
-    // Converter para DataURL para preview
-    Promise.all(validFiles.map(file => new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target.result);
-      reader.readAsDataURL(file);
-    }))).then(dataUrls => {
-      onImagesChange?.([...images, ...dataUrls]);
-    });
+
+    setUploading(true);
+    setProgress({ current: 0, total: validFiles.length });
+
+    const dataUrls = [];
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      // eslint-disable-next-line no-await-in-loop
+      const dataUrl = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+      dataUrls.push(dataUrl);
+      setProgress({ current: i + 1, total: validFiles.length });
+    }
+    onImagesChange?.([...images, ...dataUrls]);
+    setTimeout(() => {
+      setUploading(false);
+      setProgress({ current: 0, total: 0 });
+    }, 600);
   };
 
   // Remover imagem do preview local
@@ -72,12 +85,11 @@ export function ImageUploader({ images = [], onImagesChange, onError }) {
       {/* Área de upload com drag and drop */}
       <div
         className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer
-          ${dragActive
+            ${dragActive
             ? 'border-eliteGold bg-eliteGold/10'
             : 'border-gray-700 hover:border-gray-500 hover:bg-gray-800/30'
           }
-          {/* Removido uploading, pois não existe mais */}
-        `}
+          `}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -106,6 +118,21 @@ export function ImageUploader({ images = [], onImagesChange, onError }) {
             JPG, PNG ou WebP • Máximo 5MB cada • Até 10 imagens
           </p>
         </>
+
+        {/* Barra de progresso do upload */}
+        {uploading && progress.total > 0 && (
+          <div className="mt-4">
+            <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden border border-eliteGold">
+              <div
+                className="h-4 bg-eliteGold transition-all duration-300 flex items-center justify-center text-xs font-bold text-black"
+                style={{ width: `${(progress.current / progress.total) * 100}%` }}
+              >
+                {progress.current} / {progress.total}
+              </div>
+            </div>
+            <p className="text-xs text-eliteGold mt-1 font-medium">Enviando imagens...</p>
+          </div>
+        )}
       </div>
       {images.length > 0 && (
         <div className="space-y-3">

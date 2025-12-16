@@ -45,7 +45,8 @@ import { MediaManager } from './MediaManager.jsx';
 import { adminService } from '../../services/adminService';
 import { ImageUploader } from '../../components/admin/ImageUploader';
 
-export function ProductsAdminPage() {      // Modal de mídia
+export function ProductsAdminPage() {
+  // Modal de mídia
   const [showMediaModal, setShowMediaModal] = useState(false);
   const [mediaSelectIndex, setMediaSelectIndex] = useState(null); // para saber qual campo de imagem está selecionando
   const [products, setProducts] = useState([]);
@@ -75,6 +76,7 @@ export function ProductsAdminPage() {      // Modal de mídia
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState('list'); // 'list' ou 'grid'
 
   useEffect(() => {
     loadProducts();
@@ -252,7 +254,7 @@ export function ProductsAdminPage() {      // Modal de mídia
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading text-2xl text-eliteGold">Produtos</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <button onClick={handleExportCSV} className="btn-secondary px-4 py-2 text-sm flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             Exportar CSV
@@ -261,6 +263,26 @@ export function ProductsAdminPage() {      // Modal de mídia
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Novo Produto
           </button>
+          <div className="flex gap-1 ml-2 bg-gray-900/80 border border-eliteGold/30 rounded-lg p-1">
+            <button
+              type="button"
+              className={`px-2 py-1 rounded-md flex items-center gap-1 text-xs font-medium transition-colors ${viewMode === 'list' ? 'bg-eliteGold/90 text-black' : 'text-eliteGold hover:bg-eliteGold/20'}`}
+              onClick={() => setViewMode('list')}
+              title="Visualizar em lista"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+              Lista
+            </button>
+            <button
+              type="button"
+              className={`px-2 py-1 rounded-md flex items-center gap-1 text-xs font-medium transition-colors ${viewMode === 'grid' ? 'bg-eliteGold/90 text-black' : 'text-eliteGold hover:bg-eliteGold/20'}`}
+              onClick={() => setViewMode('grid')}
+              title="Visualizar em quadrados"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>
+              Quadrados
+            </button>
+          </div>
         </div>
       </div>
 
@@ -657,73 +679,113 @@ export function ProductsAdminPage() {      // Modal de mídia
       )}
 
       {/* Lista de produtos */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-800/50">
-              <tr>
-                <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Produto</th>
-                <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Categoria</th>
-                <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Preço</th>
-                <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Estoque</th>
-                <th className="text-right text-gray-400 text-sm font-medium px-4 py-3">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800">
-              {filteredProducts.map((product) => {
-                const totalStock = product.inventory
-                  ? Object.values(product.inventory.stock).reduce((a, b) => a + b, 0)
-                  : 0;
-                return (
-                  <tr key={product.id} className="hover:bg-gray-800/30">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={product.images[0] || '/placeholder.jpg'}
-                          alt={product.name}
-                          className="w-10 h-10 object-cover rounded"
-                        />
-                        <div>
-                          <p className="text-white">{product.name}</p>
-                          <p className="text-gray-400 text-sm">{product.team}</p>
+      {viewMode === 'list' ? (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-800/50">
+                <tr>
+                  <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Produto</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Categoria</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Preço</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Estoque</th>
+                  <th className="text-right text-gray-400 text-sm font-medium px-4 py-3">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {filteredProducts.map((product) => {
+                  const totalStock = product.inventory
+                    ? Object.values(product.inventory.stock).reduce((a, b) => a + b, 0)
+                    : 0;
+                  return (
+                    <tr key={product.id} className="hover:bg-gray-800/30">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={product.images[0] || '/placeholder.jpg'}
+                            alt={product.name}
+                            className="w-10 h-10 object-cover rounded"
+                          />
+                          <div>
+                            <p className="text-white">{product.name}</p>
+                            <p className="text-gray-400 text-sm">{product.team}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-gray-300 text-sm">{product.category}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-eliteGold">R$ {product.price.toFixed(2)}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-sm ${totalStock > 10 ? 'text-green-400' : totalStock > 0 ? 'text-yellow-400' : 'text-red-400'}`}>
-                        {totalStock} un
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => openEditProduct(product)}
-                        className="text-blue-400 hover:text-blue-300 text-sm mr-3"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="text-red-400 hover:text-red-300 text-sm"
-                      >
-                        Excluir
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-gray-300 text-sm">{product.category}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-eliteGold">R$ {product.price.toFixed(2)}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-sm ${totalStock > 10 ? 'text-green-400' : totalStock > 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {totalStock} un
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => openEditProduct(product)}
+                          className="text-blue-400 hover:text-blue-300 text-sm mr-3"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          className="text-red-400 hover:text-red-300 text-sm"
+                        >
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {filteredProducts.length === 0 && (
+            <p className="text-gray-400 text-center py-8">Nenhum produto encontrado</p>
+          )}
         </div>
-        {filteredProducts.length === 0 && (
-          <p className="text-gray-400 text-center py-8">Nenhum produto encontrado</p>
-        )}
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredProducts.map((product) => {
+            const totalStock = product.inventory
+              ? Object.values(product.inventory.stock).reduce((a, b) => a + b, 0)
+              : 0;
+            return (
+              <div key={product.id} className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg p-4 flex flex-col gap-3 hover:border-eliteGold/60 transition-all">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={product.images[0] || '/placeholder.jpg'}
+                    alt={product.name}
+                    className="w-16 h-16 object-cover rounded-lg border border-eliteGold/30 bg-gray-800"
+                  />
+                  <div className="flex-1">
+                    <h3 className="text-base font-semibold text-white truncate" title={product.name}>{product.name}</h3>
+                    <p className="text-xs text-gray-400 truncate">{product.team}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+                  <span className="text-xs px-2 py-1 rounded bg-eliteGold/10 text-eliteGold font-bold">{product.category}</span>
+                  <span className="text-xs text-green-400 font-semibold">{totalStock} un</span>
+                </div>
+                <div className="flex gap-2 justify-end items-center mt-2">
+                  <span className="text-sm font-bold text-eliteGold flex items-center gap-1 mr-auto">
+                    <svg className="w-4 h-4 text-eliteGold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="2" y="7" width="20" height="10" rx="2" strokeWidth="2"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11.37a2 2 0 11-4 0 2 2 0 014 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 7v10M18 7v10"/></svg>
+                    R$ {Number(product.price).toFixed(2)}
+                  </span>
+                  <button onClick={() => openEditProduct(product)} className="text-blue-400 hover:underline text-xs font-medium">Editar</button>
+                  <button onClick={() => handleDelete(product.id)} className="text-red-400 hover:underline text-xs font-medium">Excluir</button>
+                </div>
+              </div>
+            );
+          })}
+          {filteredProducts.length === 0 && (
+            <p className="text-gray-400 text-center py-8 col-span-full">Nenhum produto encontrado</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

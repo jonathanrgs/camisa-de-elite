@@ -29,15 +29,23 @@ export const imageController = {
       const results = [];
       for (const url of urls) {
         const publicId = getPublicIdFromUrl(url);
+        console.log('[DELETE][BACK] url:', url, 'publicId extraído:', publicId);
         if (publicId) {
-          await deleteImage(publicId);
-          results.push({ url, deleted: true });
+          try {
+            const result = await deleteImage(publicId);
+            console.log('[DELETE][BACK] Cloudinary result:', result);
+            results.push({ url, deleted: true, cloudinary: result });
+          } catch (cloudErr) {
+            console.error('[DELETE][BACK] Erro ao deletar do Cloudinary:', cloudErr);
+            results.push({ url, deleted: false, error: cloudErr?.message || String(cloudErr) });
+          }
         } else {
-          results.push({ url, deleted: false });
+          results.push({ url, deleted: false, error: 'publicId não extraído' });
         }
       }
       return successResponse(res, { results });
     } catch (err) {
+      console.error('[DELETE][BACK] Erro geral ao deletar:', err);
       return errorResponse(res, 'Erro ao deletar imagem', 'DELETE_ERROR', 500);
     }
   },
@@ -45,6 +53,7 @@ export const imageController = {
   // PUT /api/admin/media/rename - Renomear uma imagem
   async renameMedia(req, res) {
     let { url, newName } = req.body;
+    console.log('[RENAME][BACK] Recebido:', { url, newName });
     if (!url || !newName) {
       return errorResponse(res, 'URL e novo nome obrigatórios', 'RENAME_PARAMS', 400);
     }
@@ -52,16 +61,42 @@ export const imageController = {
       // Permitir espaços e caracteres especiais no nome (Cloudinary faz encode)
       newName = decodeURIComponent(newName).replace(/\s+/g, ' ').trim();
       const publicId = getPublicIdFromUrl(url);
-      if (!publicId) return errorResponse(res, 'publicId não encontrado', 'NO_PUBLICID', 400);
+      console.log('[RENAME][BACK] publicId extraído:', publicId);
+      if (!publicId) {
+        console.error('[RENAME][BACK] publicId não encontrado para url:', url);
+        return errorResponse(res, 'publicId não encontrado', 'NO_PUBLICID', 400);
+      }
       const folder = publicId.substring(0, publicId.lastIndexOf('/'));
-      const newPublicId = folder ? `${folder}/${newName}` : newName;
-      await cloudinary.uploader.rename(publicId, newPublicId);
-      // Monta nova URL (Cloudinary faz encode dos espaços para %20)
-      const urlParts = url.split('/');
-      urlParts[urlParts.length - 1] = encodeURIComponent(newName);
-      const newUrl = urlParts.join('/');
-      return successResponse(res, { oldUrl: url, newUrl });
+      // Pega a extensão do arquivo original
+      const extMatch = url.match(/\.([a-zA-Z0-9]+)(\?|$)/);
+      const ext = extMatch ? `.${extMatch[1]}` : '';
+      console.log('[RENAME][BACK] Extensão detectada:', ext);
+      // Remove extensão do newName se já tiver
+      let cleanName = newName;
+      if (cleanName.toLowerCase().endsWith(ext.toLowerCase())) {
+        cleanName = cleanName.slice(0, -ext.length);
+      }
+      console.log('[RENAME][BACK] cleanName:', cleanName);
+      const newPublicId = folder ? `${folder}/${cleanName}${ext}` : `${cleanName}${ext}`;
+      console.log('[RENAME][BACK] newPublicId:', newPublicId);
+      try {
+        const result = await cloudinary.uploader.rename(publicId, newPublicId);
+        console.log('[RENAME][BACK] Cloudinary result:', result);
+        // Monta nova URL (Cloudinary faz encode dos espaços para %20)
+        const urlParts = url.split('/');
+        urlParts[urlParts.length - 1] = encodeURIComponent(cleanName + ext);
+        const newUrl = urlParts.join('/');
+        console.log('[RENAME][BACK] Nova URL:', newUrl);
+        return successResponse(res, { oldUrl: url, newUrl });
+      } catch (cloudErr) {
+        if (cloudErr?.http_code === 400 && String(cloudErr?.message).includes('already exists')) {
+          return errorResponse(res, 'Já existe uma imagem com esse nome. Escolha outro nome.', 'NAME_EXISTS', 400);
+        }
+        console.error('[RENAME][BACK] Erro ao renomear:', cloudErr, 'url:', url, 'newName:', newName);
+        return errorResponse(res, 'Erro ao renomear imagem', 'RENAME_ERROR', 500);
+      }
     } catch (err) {
+      console.error('[RENAME] Erro ao renomear:', err, 'url:', url, 'newName:', newName);
       return errorResponse(res, 'Erro ao renomear imagem', 'RENAME_ERROR', 500);
     }
   },
