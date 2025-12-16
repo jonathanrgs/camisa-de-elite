@@ -1,6 +1,8 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useState } from 'react';
+import { Logo } from '../../components/ui';
+import { TruckIcon } from '../../components/ui';
 
 export function AdminLayout() {
   const { user, logout } = useAuth();
@@ -14,12 +16,14 @@ export function AdminLayout() {
     orders: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>,
     reviews: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>,
     users: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
-    shipping: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16V8a2 2 0 012-2h2a2 2 0 012 2v8m0 0a2 2 0 002 2h4a2 2 0 002-2V8a2 2 0 00-2-2h-2a2 2 0 00-2 2v8z" /></svg>,
+    shipping: <TruckIcon className="w-5 h-5" />, // Caminhão
   };
 
+  // Ícone de etiqueta (tag) para cupons
   const couponIcon = (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6M7 7h.01M17 17h.01M5 11a2 2 0 012-2V7a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 002 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2a2 2 0 00-2-2H7a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7a1 1 0 011-1h4.586a1 1 0 01.707.293l5.414 5.414a2 2 0 010 2.828l-5.414 5.414a2 2 0 01-2.828 0l-5.414-5.414A1 1 0 013 12.586V8a1 1 0 011-1h3zm0 0v.01" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
     </svg>
   );
 
@@ -53,18 +57,16 @@ export function AdminLayout() {
       {/* Sidebar Desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-gray-900/50 border-r border-gray-800 fixed h-screen">
         {/* Logo */}
-        <div className="p-4 border-b border-gray-800">
+        <div className="p-4 border-b border-gray-800 bg-eliteGold/10">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-eliteGold to-eliteGold/60 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-eliteBlack" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
+            {/* Ícone da logo */}
+            <div className="flex-shrink-0 flex items-center justify-center">
+              <Logo size="sm" showText={false} />
             </div>
-            <div>
-              <h1 className="font-heading text-eliteGold font-bold">Camisa de Elite</h1>
-              <span className="text-[10px] bg-eliteGold/20 text-eliteGold px-2 py-0.5 rounded font-medium">
-                ADMIN PANEL
-              </span>
+            {/* Nome e Admin Panel em coluna */}
+            <div className="flex flex-col items-start justify-center ml-2">
+              <span className="font-heading text-eliteGold font-bold leading-tight text-base">CAMISA DE ELITE</span>
+              <span className="text-[10px] bg-eliteGold/20 text-eliteGold px-2 py-0.5 rounded font-medium mt-1">ADMIN PAINEL</span>
             </div>
           </Link>
         </div>
