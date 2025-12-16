@@ -12,7 +12,7 @@ export function Footer() {
               <Logo size="sm" />
             </Link>
             <p className="text-gray-400 text-sm">
-              Catálogo de camisas de futebol. {CONFIG.storeSlogan}!
+              {CONFIG.storeSlogan}!
             </p>
           </div>
 

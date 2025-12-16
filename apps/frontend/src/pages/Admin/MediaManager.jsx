@@ -52,44 +52,43 @@ export function MediaManager({ onSelect }) {
     return fileName.toLowerCase().includes(search.toLowerCase());
   });
 
-  // Upload de nova imagem
-  const handleUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // Upload de nova(s) imagem(ns)
+  const handleUpload = async (e, filesArg) => {
+    const files = filesArg || e.target.files;
+    if (!files || files.length === 0) return;
     setUploading(true);
     setError('');
     try {
-      const formData = new FormData();
-      formData.append('image', file);
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${token}`
+      let newImages = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'Erro ao enviar imagem');
         }
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Erro ao enviar imagem');
+        const imageUrl = data.data?.url || data.url;
+        if (imageUrl) {
+          newImages.push(imageUrl);
+        }
       }
-
-      // Pega a URL da resposta (pode vir em data.url ou data.data.url)
-      const imageUrl = data.data?.url || data.url;
-
-      if (imageUrl) {
-        setImages((prev) => [imageUrl, ...prev]);
-      } else {
-        setError('Erro ao enviar imagem');
+      if (newImages.length > 0) {
+        setImages((prev) => [...newImages, ...prev]);
       }
     } catch (err) {
       console.error('Erro no upload:', err);
       setError(err.message || 'Erro ao enviar imagem');
     } finally {
       setUploading(false);
-      // Limpa o input para permitir reenviar o mesmo arquivo
-      e.target.value = '';
+      if (e && e.target) e.target.value = '';
     }
   };
 
@@ -106,7 +105,16 @@ export function MediaManager({ onSelect }) {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" 
+          onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
+          onDrop={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+              handleUpload(null, e.dataTransfer.files);
+            }
+          }}
+        >
           {selected.length > 0 && (
             <button
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-bold transition"
@@ -138,7 +146,7 @@ export function MediaManager({ onSelect }) {
           <label className="inline-flex items-center gap-2 cursor-pointer px-4 py-2 bg-eliteGold/10 hover:bg-eliteGold/20 text-eliteGold rounded-lg font-medium transition-all border border-eliteGold/30">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             <span>Enviar Imagem</span>
-            <input type="file" accept="image/*" onChange={handleUpload} disabled={uploading} className="hidden" />
+            <input type="file" accept="image/*" multiple onChange={handleUpload} disabled={uploading} className="hidden" />
           </label>
         </div>
       </div>
@@ -157,65 +165,80 @@ export function MediaManager({ onSelect }) {
       ) : filteredImages.length === 0 ? (
         <div className="text-gray-400 text-center py-12">Nenhuma mídia encontrada no sistema.</div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid gap-3 justify-start" style={{gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 0fr))'}}>
           {filteredImages.map((img, idx) => {
             let fileName = img.split('/').pop()?.split('?')[0] || 'imagem';
             const isSelected = selected.includes(img);
             return (
-              <div key={img} className={`relative group border-2 rounded-lg overflow-hidden shadow transition-all bg-gray-900/60 ${isSelected ? 'border-eliteGold' : 'border-gray-800 hover:border-eliteGold/60'}`}>
+              <div key={img} className={`relative group border-2 rounded-lg overflow-hidden shadow transition-all bg-gray-900/60 ${isSelected ? 'border-eliteGold' : 'border-gray-800 hover:border-eliteGold/60'} max-w-[320px] mx-auto`}>
                 <input
                   type="checkbox"
                   checked={isSelected}
-                  onChange={e => {
-                    setSelected(sel => e.target.checked ? [...sel, img] : sel.filter(u => u !== img));
-                  }}
-                  className="absolute top-2 left-2 z-10 w-4 h-4 accent-eliteGold bg-black/60 border border-gray-700 rounded"
+                  readOnly
+                  className="absolute top-2 left-2 z-10 w-4 h-4 accent-eliteGold bg-black/60 border border-gray-700 rounded pointer-events-none"
+                  tabIndex={-1}
                   title="Selecionar imagem"
                 />
-                <img
-                  src={img}
-                  alt={fileName}
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200 cursor-pointer"
-                  title={fileName}
-                  onClick={() => window.open(img, '_blank')}
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-xs text-eliteGold px-2 py-1 truncate flex items-center gap-1">
-                  <span className="flex-1 truncate">{fileName}</span>
+                <div className="relative w-full h-64 cursor-pointer group"
+                  onClick={() => setSelected(sel => isSelected ? sel.filter(u => u !== img) : [...sel, img])}
+                  title={isSelected ? 'Desmarcar imagem' : 'Selecionar imagem'}
+                >
+                  <img
+                    src={img}
+                    alt={fileName}
+                    className={`w-full h-64 object-cover group-hover:scale-105 transition-transform duration-200 border-b-2 border-eliteGold/30 ${isSelected ? 'ring-4 ring-eliteGold/60' : ''}`}
+                    style={{ boxSizing: 'border-box' }}
+                  />
                   <button
-                    className="ml-1 text-xs text-blue-400 hover:text-blue-200 underline"
-                    title="Renomear"
-                    onClick={() => {
-                      setRenaming(img);
-                      setRenameValue(fileName.replace(/\.[^/.]+$/, ''));
-                    }}
-                  >Renomear</button>
-                  <button
-                    className="ml-1 text-xs text-red-400 hover:text-red-200 underline"
-                    title="Excluir"
-                    onClick={async () => {
-                      if (!window.confirm('Deseja excluir esta imagem?')) return;
-                      setLoading(true);
-                      setError('');
-                      try {
-                        const token = localStorage.getItem('token');
-                        const res = await fetch('/api/admin/media', {
-                          method: 'DELETE',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`
-                          },
-                          body: JSON.stringify({ urls: [img] })
-                        });
-                        if (!res.ok) throw new Error('Erro ao excluir imagem');
-                        setImages(prev => prev.filter(u => u !== img));
-                        setSelected(sel => sel.filter(u => u !== img));
-                      } catch (err) {
-                        setError('Erro ao excluir imagem');
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                  >Excluir</button>
+                    type="button"
+                    className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg z-10"
+                    title="Visualizar imagem em nova aba"
+                    onClick={e => { e.stopPropagation(); window.open(img, '_blank'); }}
+                  >
+                    <svg className="w-5 h-5 mx-auto my-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0c0 5-7 9-9 9s-9-4-9-9 7-9 9-9 9 4 9 9z" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 py-3 flex flex-col items-center gap-2">
+                  <span className="block text-eliteGold text-base font-bold truncate w-full text-center drop-shadow" title={decodeURIComponent(fileName)}>{decodeURIComponent(fileName)}</span>
+                  <div className="flex justify-center gap-3 w-full">
+                    <button
+                      className="flex-1 px-2 py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition shadow"
+                      title="Renomear"
+                      onClick={() => {
+                        setRenaming(img);
+                        setRenameValue(fileName.replace(/\.[^/.]+$/, ''));
+                      }}
+                    >Renomear</button>
+                    <button
+                      className="flex-1 px-2 py-2 rounded bg-red-600 hover:bg-red-500 text-white text-sm font-bold transition shadow"
+                      title="Excluir"
+                      onClick={async () => {
+                        if (!window.confirm('Deseja excluir esta imagem?')) return;
+                        setLoading(true);
+                        setError('');
+                        try {
+                          const token = localStorage.getItem('token');
+                          const res = await fetch('/api/admin/media', {
+                            method: 'DELETE',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              Authorization: `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ urls: [img] })
+                          });
+                          if (!res.ok) throw new Error('Erro ao excluir imagem');
+                          setImages(prev => prev.filter(u => u !== img));
+                          setSelected(sel => sel.filter(u => u !== img));
+                        } catch (err) {
+                          setError('Erro ao excluir imagem');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                    >Excluir</button>
+                  </div>
                 </div>
                 {/* Modal de renomear */}
                 {renaming === img && (
@@ -269,12 +292,19 @@ export function MediaManager({ onSelect }) {
                     </div>
                   </div>
                 )}
-                {onSelect && (
-                  <button
-                    className="absolute inset-0 flex items-center justify-center bg-eliteGold/80 text-eliteBlack text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => onSelect(img)}
-                  >Selecionar</button>
-                )}
+                {/* Botão de seleção individual removido para seleção múltipla */}
+                    {/* Botão de seleção múltipla para integração com ProductsAdminPage */}
+                    {onSelect && selected.length > 0 && (
+                      <div className="fixed bottom-6 left-0 right-0 flex justify-center z-[110] pointer-events-none">
+                        <button
+                          className="px-6 py-3 bg-eliteGold text-black font-bold rounded-xl shadow-lg border border-eliteGold/40 hover:bg-yellow-400 transition-all pointer-events-auto"
+                          style={{ minWidth: 220 }}
+                          onClick={() => onSelect(selected)}
+                        >
+                          Selecionar {selected.length} imagem{selected.length > 1 ? 's' : ''}
+                        </button>
+                      </div>
+                    )}
               </div>
             );
           })}
