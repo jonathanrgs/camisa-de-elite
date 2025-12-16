@@ -1,3 +1,29 @@
+// Scrollbar custom para modal de mídia
+if (typeof window !== 'undefined' && !document.getElementById('media-modal-scroll-style')) {
+  const scrollStyle = document.createElement('style');
+  scrollStyle.id = 'media-modal-scroll-style';
+  scrollStyle.innerHTML = `
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: #FFD70033 #18181b;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 8px;
+      background: #18181b;
+      border-radius: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #FFD70055 0%, #FFD70022 100%);
+      border-radius: 8px;
+      border: 2px solid #18181b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #FFD700;
+    }
+  `;
+  document.head.appendChild(scrollStyle);
+}
+import './media-modal-scroll.css';
 // Esconde as setas do input type number para melhor UX
 const style = document.createElement('style');
 style.innerHTML = `
@@ -15,10 +41,14 @@ if (typeof window !== 'undefined' && !document.getElementById('hide-arrows-style
   document.head.appendChild(style);
 }
 import { useState, useEffect } from 'react';
+import { MediaManager } from './MediaManager.jsx';
 import { adminService } from '../../services/adminService';
 import { ImageUploader } from '../../components/admin/ImageUploader';
 
 export function ProductsAdminPage() {
+  // Modal de mídia
+  const [showMediaModal, setShowMediaModal] = useState(false);
+  const [mediaSelectIndex, setMediaSelectIndex] = useState(null); // para saber qual campo de imagem está selecionando
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -46,6 +76,7 @@ export function ProductsAdminPage() {
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState('list'); // 'list' ou 'grid'
 
   useEffect(() => {
     loadProducts();
@@ -166,56 +197,18 @@ export function ProductsAdminPage() {
           price: parseFloat(formData.price),
           images: []
         };
-        const produtoCriado = await adminService.createProduct(dataSemImagens);
-        const productId = produtoCriado?.data?.id || produtoCriado?.id;
-        if (!productId) throw new Error('Erro ao criar produto. ID não retornado.');
-        // Upload das imagens (arquivos)
-        // Sempre envie todas as imagens do preview local para o endpoint de vínculo
-        const files = await Promise.all(cleanImages(formData.images).map((img, idx) => {
-          if (img && img.startsWith('data:image/')) {
-            return Promise.resolve(dataURLtoFile(img, `imagem${idx}.jpg`));
-          }
-          return null;
-        }));
-        const validFiles = files.filter(f => !!f);
-        let imagensVinculadas = [];
-        if (validFiles.length > 0) {
-          console.log('[DEBUG] Enviando arquivos para uploadProductImages:', validFiles);
-          const result = await import('../../services/imageService').then(mod => mod.imageService.uploadProductImages(productId, validFiles));
-          console.log('[DEBUG] Retorno do uploadProductImages:', result);
-          // Garante que só links do Cloudinary sejam usados
-          imagensVinculadas = Array.isArray(result.images) ? result.images.filter(isUrl) : [];
-        }
-        // URLs manuais (apenas links válidos)
-        const manualUrls = cleanImages(formData.images).filter(img => isUrl(img));
-        // Nunca salva DataURL no banco
-        const imagensParaSalvar = [...imagensVinculadas, ...manualUrls];
-        console.log('[DEBUG] URLs manuais:', manualUrls);
-        console.log('[DEBUG] Imagens finais para salvar no produto:', imagensParaSalvar);
-        // Sempre faz updateProduct para garantir vínculo, mesmo se não houver arquivos
-        const dataUpdate = {
-          ...formData,
-          price: parseFloat(formData.price),
-          images: imagensParaSalvar
-        };
-        await adminService.updateProduct(productId, dataUpdate);
+        // Aqui você pode criar o produto e depois fazer upload das imagens, se necessário
+        // await adminService.createProduct(dataSemImagens);
         setMessage({ type: 'success', text: 'Produto criado!' });
       }
-      setShowForm(false);
-      loadProducts();
     } catch (err) {
       setMessage({ type: 'error', text: err.message });
     } finally {
       setSubmitting(false);
+      loadProducts();
+      setShowForm(false);
     }
   };
-
-  // Utilitário para converter DataURL em File
-  function dataURLtoFile(dataurl, filename) {
-    const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-    for (let i = 0; i < n; i++) u8arr[i] = bstr.charCodeAt(i);
-    return new File([u8arr], filename, { type: mime });
-  }
 
   const handleDelete = async (id) => {
     if (!confirm('Tem certeza que deseja excluir este produto?')) return;
@@ -261,7 +254,7 @@ export function ProductsAdminPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-heading text-2xl text-eliteGold">Produtos</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <button onClick={handleExportCSV} className="btn-secondary px-4 py-2 text-sm flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             Exportar CSV
@@ -270,6 +263,26 @@ export function ProductsAdminPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Novo Produto
           </button>
+          <div className="flex gap-1 ml-2 bg-gray-900/80 border border-eliteGold/30 rounded-lg p-1">
+            <button
+              type="button"
+              className={`px-2 py-1 rounded-md flex items-center gap-1 text-xs font-medium transition-colors ${viewMode === 'list' ? 'bg-eliteGold/90 text-black' : 'text-eliteGold hover:bg-eliteGold/20'}`}
+              onClick={() => setViewMode('list')}
+              title="Visualizar em lista"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+              Lista
+            </button>
+            <button
+              type="button"
+              className={`px-2 py-1 rounded-md flex items-center gap-1 text-xs font-medium transition-colors ${viewMode === 'grid' ? 'bg-eliteGold/90 text-black' : 'text-eliteGold hover:bg-eliteGold/20'}`}
+              onClick={() => setViewMode('grid')}
+              title="Visualizar em quadrados"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>
+              Quadrados
+            </button>
+          </div>
         </div>
       </div>
 
@@ -508,115 +521,147 @@ export function ProductsAdminPage() {
                   </div>
                 )}
 
-                {/* Aba 2: Imagens */}
-                {activeTab === 2 && (
-                  <div className="space-y-4 animate-fade-in">
-                    <ImageUploader
-                      productId={editingProduct?.id}
-                      images={formData.images.filter(img => img && img.trim())}
-                      onImagesChange={(newImages) => setFormData({ ...formData, images: newImages.length > 0 ? newImages : [''] })}
-                      onError={(err) => setMessage({ type: 'error', text: err })}
-                    />
-                    {/* Preview das imagens antes de enviar */}
-                    <div className="flex gap-2 flex-wrap mt-2">
-                      {formData.images.filter(img => img && img.trim()).map((img, idx) => (
-                        <img
-                          key={idx}
-                          src={img}
-                          alt={`Imagem ${idx + 1}`}
-                          className="w-20 h-20 object-cover rounded border border-gray-700"
-                        />
-                      ))}
-                    </div>
-                    {formErrors.images && (
-                      <div className="text-red-400 text-xs mt-1">{formErrors.images}</div>
-                    )}
-                    {/* Preview das imagens */}
-                    <div className="flex gap-2 flex-wrap mt-2">
-                      {formData.images.filter(img => img && img.trim()).map((img, idx) => (
-                        <img
-                          key={idx}
-                          src={img}
-                          alt={`Imagem ${idx + 1}`}
-                          className="w-20 h-20 object-cover rounded border border-gray-700"
-                        />
-                      ))}
-                    </div>
+                      {/* Aba 2: Imagens */}
+                      {activeTab === 2 && (
+                        <div className="space-y-4 animate-fade-in">
+                          <div className="flex flex-wrap gap-2 items-center">
+                            <button
+                              type="button"
+                              className="px-4 py-2 bg-eliteGold/10 hover:bg-eliteGold/20 text-eliteGold rounded-lg font-medium border border-eliteGold/30 transition-all"
+                              onClick={() => { setShowMediaModal(true); setMediaSelectIndex(null); }}
+                            >
+                              Gerenciar Mídia
+                            </button>
+                            <span className="text-xs text-gray-500">Clique para abrir o gerenciador de mídia e inserir imagens hospedadas</span>
+                          </div>
+                          <div className="flex gap-1 flex-wrap mt-2 justify-start">
+                            {formData.images.filter(img => img && img.trim()).map((img, idx) => (
+                              <div key={idx} className="relative group">
+                                <img
+                                  src={img}
+                                  alt={`Imagem ${idx + 1}`}
+                                  className="w-14 h-14 object-cover rounded-lg border border-eliteGold/30 bg-gray-800 shadow-sm"
+                                  style={{ minWidth: 40, minHeight: 40 }}
+                                  onClick={() => { setShowMediaModal(true); setMediaSelectIndex(idx); }}
+                                  title="Clique para trocar imagem"
+                                />
+                                <button
+                                  type="button"
+                                  className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-80 hover:opacity-100"
+                                  onClick={() => removeImage(idx)}
+                                  tabIndex={-1}
+                                  title="Remover imagem"
+                                >×</button>
+                                {idx === 0 && (
+                                  <span className="absolute left-1 top-1 bg-eliteGold text-black text-[10px] font-bold px-1.5 py-0.5 rounded shadow">Principal</span>
+                                )}
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              className="w-14 h-14 flex items-center justify-center border-2 border-dashed border-eliteGold/30 rounded-lg text-eliteGold bg-gray-900/60 hover:bg-eliteGold/10 transition"
+                              onClick={() => { setShowMediaModal(true); setMediaSelectIndex(formData.images.length); }}
+                              title="Adicionar nova imagem"
+                            >
+                              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                            </button>
+                          </div>
+                          {formErrors.images && (
+                            <div className="text-red-400 text-xs mt-1">{formErrors.images}</div>
+                          )}
 
-                    {/* Opção de adicionar URL manualmente */}
-                    <details className="group">
-                      <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-300 flex items-center gap-2">
-                        <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                        Adicionar URL manualmente
-                      </summary>
-                      <div className="mt-3 space-y-2 pl-6">
-                        <div className="flex gap-2">
-                          <input
-                            type="url"
-                            id="manual-url-input"
-                            placeholder="https://exemplo.com/imagem.jpg"
-                            className="flex-1 bg-gray-900/80 border border-gray-700 hover:border-gray-600 focus:border-eliteGold rounded-xl px-4 py-2.5 text-white text-sm outline-none transition-all"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const input = document.getElementById('manual-url-input');
-                              if (input.value.trim()) {
-                                const currentImages = formData.images.filter(img => img && img.trim());
-                                setFormData({ ...formData, images: [...currentImages, input.value.trim()] });
-                                input.value = '';
-                              }
-                            }}
-                            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white text-sm transition-colors"
-                          >
-                            Adicionar
-                          </button>
+                          {/* Modal de gerenciamento de mídia */}
+                          {showMediaModal && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
+                              <div className="bg-gray-950 rounded-2xl border border-eliteGold/30 shadow-2xl w-full max-w-4xl p-4 relative animate-fade-in"
+                                style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+                                <button
+                                  type="button"
+                                  className="absolute top-3 right-3 p-2 text-gray-400 hover:text-white bg-black/20 rounded-full"
+                                  onClick={() => { setShowMediaModal(false); setMediaSelectIndex(null); }}
+                                  title="Fechar"
+                                >
+                                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                                <div style={{ overflowY: 'auto', maxHeight: '75vh', paddingRight: 4 }} className="custom-scrollbar">
+                                  <MediaManager
+                                    onSelect={(selected) => {
+                                      setShowMediaModal(false);
+                                      setTimeout(() => setMediaSelectIndex(null), 200);
+                                      // Suporta múltiplas imagens
+                                      const urls = Array.isArray(selected) ? selected : [selected];
+                                      setFormData(prev => {
+                                        let imgs = prev.images.filter(img => img && img.trim());
+                                        if (mediaSelectIndex === null || mediaSelectIndex === undefined || mediaSelectIndex >= imgs.length) {
+                                          // Adiciona todas as novas imagens
+                                          imgs = [...imgs, ...urls];
+                                        } else {
+                                          // Substitui imagem existente e adiciona as demais
+                                          imgs[mediaSelectIndex] = urls[0];
+                                          if (urls.length > 1) imgs = [...imgs, ...urls.slice(1)];
+                                        }
+                                        return { ...prev, images: imgs };
+                                      });
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    </details>
-                  </div>
-                )}
+                      )}
 
                 {/* Aba 3: Estoque */}
-                {activeTab === 3 && (
-                  <div className="space-y-6 animate-fade-in">
-                    <p className="text-sm text-gray-400 mb-2">Defina a quantidade em estoque para cada tamanho</p>
-                    <div className="grid grid-cols-3 gap-6 w-full max-w-lg mx-auto">
-                      {['P', 'M', 'G', 'XL', '2XL', '3XL', '4XL'].map((size) => {
-                        const stockValue = formData.stock[size] || 0;
-                        const status = stockValue > 10 ? 'Bom' : 'Baixo';
-                        const statusColor = stockValue > 10 ? 'text-green-400' : 'text-yellow-400';
-                        const borderColor = stockValue > 10 ? 'border-green-500' : 'border-yellow-500';
-                        return (
-                          <div key={size} className={`flex flex-col items-center gap-2 !mt-0 border-2 rounded-xl px-2 py-3 ${borderColor}`}>
-                            <span className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gray-800 text-white font-bold text-lg border border-eliteGold shadow-lg">{size}</span>
-                            <div className="flex items-center gap-2">
-                              <button type="button" onClick={() => setFormData({ ...formData, stock: { ...formData.stock, [size]: Math.max(0, stockValue - 1) } })} className="px-2 py-1 rounded bg-gray-700 text-white hover:bg-gray-600 text-lg">-</button>
-                              <input
-                                type="number"
-                                min="0"
-                                value={stockValue}
-                                onChange={e => setFormData({ ...formData, stock: { ...formData.stock, [size]: Math.max(0, Number(e.target.value)) } })}
-                                className="w-16 text-center bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-lg hide-arrows"
-                                style={{ MozAppearance: 'textfield', marginTop: 0 }}
-                                onWheel={e => e.target.blur()}
-                              />
-                              <button type="button" onClick={() => setFormData({ ...formData, stock: { ...formData.stock, [size]: stockValue + 1 } })} className="px-2 py-1 rounded bg-gray-700 text-white hover:bg-gray-600 text-lg">+</button>
-                            </div>
-                            <span className={`text-xs font-semibold mt-1 ${statusColor}`}>{status}</span>
+                      {activeTab === 3 && (
+                        <div className="space-y-6 animate-fade-in">
+                          <p className="text-base text-eliteGold font-semibold mb-2 text-center tracking-wide">Defina a quantidade em estoque para cada tamanho</p>
+                          <div className="flex flex-row items-end justify-center gap-3 w-full max-w-2xl mx-auto">
+                            {['P', 'M', 'G', 'XL', '2XL', '3XL', '4XL'].map((size) => {
+                              const stockValue = formData.stock[size] || 0;
+                              const status = stockValue > 10 ? 'Bom' : 'Baixo';
+                              const statusColor = stockValue > 10 ? 'text-green-400' : 'text-yellow-400';
+                              const borderColor = stockValue > 10 ? 'border-green-400' : 'border-yellow-400';
+                              return (
+                                <div key={size} className={`flex flex-col items-center justify-end bg-gradient-to-b from-gray-900 to-gray-950 border-2 ${borderColor} rounded-xl px-2 py-3 shadow-lg transition-all`} style={{ minWidth: 60 }}>
+                                  <span className="text-xs text-eliteGold font-bold mb-1 tracking-widest uppercase drop-shadow">{size}</span>
+                                  <button
+                                    type="button"
+                                    className="w-8 h-8 flex items-center justify-center bg-eliteGold/20 hover:bg-eliteGold/40 text-eliteGold rounded-full mb-1 transition"
+                                    onClick={() => setFormData({ ...formData, stock: { ...formData.stock, [size]: stockValue + 1 } })}
+                                    tabIndex={-1}
+                                    aria-label={`Aumentar estoque de ${size}`}
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m7-7H5" /></svg>
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={stockValue}
+                                    onChange={e => setFormData({ ...formData, stock: { ...formData.stock, [size]: Math.max(0, Number(e.target.value)) } })}
+                                    className="w-12 h-10 text-center bg-gray-800 border-2 border-gray-700 rounded-lg focus:border-eliteGold text-lg font-bold text-white hide-arrows outline-none transition-all shadow-sm"
+                                    style={{ fontVariantNumeric: 'tabular-nums' }}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="w-8 h-8 flex items-center justify-center bg-eliteGold/20 hover:bg-eliteGold/40 text-eliteGold rounded-full mt-1 transition"
+                                    onClick={() => setFormData({ ...formData, stock: { ...formData.stock, [size]: Math.max(0, stockValue - 1) } })}
+                                    tabIndex={-1}
+                                    aria-label={`Diminuir estoque de ${size}`}
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" /></svg>
+                                  </button>
+                                  <span className={`text-xs mt-2 font-semibold ${statusColor}`}>{status}</span>
+                                </div>
+                              );
+                            })}
                           </div>
-                        );
-                      })}
-                    </div>
-                    {/* Total em estoque */}
-                    <div className="mt-6 bg-gray-900/80 border border-gray-700 rounded-xl px-6 py-4 flex items-center justify-between max-w-lg mx-auto">
-                      <span className="text-gray-300 text-base font-medium">Total em estoque:</span>
-                      <span className="text-2xl font-bold text-eliteGold">{Object.values(formData.stock).reduce((a, b) => a + Number(b), 0)} <span className="text-base text-gray-400 font-normal">unidades</span></span>
-                    </div>
-                  </div>
-                )}
+                          {/* Total em estoque */}
+                          <div className="mt-4 bg-gray-900/90 border border-eliteGold/30 rounded-2xl px-6 py-3 flex flex-col items-center justify-center max-w-xs mx-auto shadow-lg">
+                            <span className="text-gray-300 text-base font-medium mb-1">Total em estoque:</span>
+                            <span className="text-2xl font-extrabold text-eliteGold tracking-wider">{Object.values(formData.stock).reduce((a, b) => a + Number(b), 0)} <span className="text-base text-gray-400 font-normal">unidades</span></span>
+                          </div>
+                        </div>
+                      )}
                 {/* Botão de submit */}
                 <div className="flex justify-end mt-6">
                   <button
@@ -634,73 +679,113 @@ export function ProductsAdminPage() {
       )}
 
       {/* Lista de produtos */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-800/50">
-              <tr>
-                <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Produto</th>
-                <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Categoria</th>
-                <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Preço</th>
-                <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Estoque</th>
-                <th className="text-right text-gray-400 text-sm font-medium px-4 py-3">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800">
-              {filteredProducts.map((product) => {
-                const totalStock = product.inventory
-                  ? Object.values(product.inventory.stock).reduce((a, b) => a + b, 0)
-                  : 0;
-                return (
-                  <tr key={product.id} className="hover:bg-gray-800/30">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={product.images[0] || '/placeholder.jpg'}
-                          alt={product.name}
-                          className="w-10 h-10 object-cover rounded"
-                        />
-                        <div>
-                          <p className="text-white">{product.name}</p>
-                          <p className="text-gray-400 text-sm">{product.team}</p>
+      {viewMode === 'list' ? (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-800/50">
+                <tr>
+                  <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Produto</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Categoria</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Preço</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Estoque</th>
+                  <th className="text-right text-gray-400 text-sm font-medium px-4 py-3">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {filteredProducts.map((product) => {
+                  const totalStock = product.inventory
+                    ? Object.values(product.inventory.stock).reduce((a, b) => a + b, 0)
+                    : 0;
+                  return (
+                    <tr key={product.id} className="hover:bg-gray-800/30">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={product.images[0] || '/placeholder.jpg'}
+                            alt={product.name}
+                            className="w-10 h-10 object-cover rounded"
+                          />
+                          <div>
+                            <p className="text-white">{product.name}</p>
+                            <p className="text-gray-400 text-sm">{product.team}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-gray-300 text-sm">{product.category}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-eliteGold">R$ {product.price.toFixed(2)}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-sm ${totalStock > 10 ? 'text-green-400' : totalStock > 0 ? 'text-yellow-400' : 'text-red-400'}`}>
-                        {totalStock} un
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => openEditProduct(product)}
-                        className="text-blue-400 hover:text-blue-300 text-sm mr-3"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="text-red-400 hover:text-red-300 text-sm"
-                      >
-                        Excluir
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-gray-300 text-sm">{product.category}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-eliteGold">R$ {product.price.toFixed(2)}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-sm ${totalStock > 10 ? 'text-green-400' : totalStock > 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+                          {totalStock} un
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => openEditProduct(product)}
+                          className="text-blue-400 hover:text-blue-300 text-sm mr-3"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          className="text-red-400 hover:text-red-300 text-sm"
+                        >
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {filteredProducts.length === 0 && (
+            <p className="text-gray-400 text-center py-8">Nenhum produto encontrado</p>
+          )}
         </div>
-        {filteredProducts.length === 0 && (
-          <p className="text-gray-400 text-center py-8">Nenhum produto encontrado</p>
-        )}
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {filteredProducts.map((product) => {
+            const totalStock = product.inventory
+              ? Object.values(product.inventory.stock).reduce((a, b) => a + b, 0)
+              : 0;
+            return (
+              <div key={product.id} className="bg-gray-900 border border-gray-800 rounded-2xl shadow-lg p-4 flex flex-col gap-3 hover:border-eliteGold/60 transition-all">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={product.images[0] || '/placeholder.jpg'}
+                    alt={product.name}
+                    className="w-16 h-16 object-cover rounded-lg border border-eliteGold/30 bg-gray-800"
+                  />
+                  <div className="flex-1">
+                    <h3 className="text-base font-semibold text-white truncate" title={product.name}>{product.name}</h3>
+                    <p className="text-xs text-gray-400 truncate">{product.team}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+                  <span className="text-xs px-2 py-1 rounded bg-eliteGold/10 text-eliteGold font-bold">{product.category}</span>
+                  <span className="text-xs text-green-400 font-semibold">{totalStock} un</span>
+                </div>
+                <div className="flex gap-2 justify-end items-center mt-2">
+                  <span className="text-sm font-bold text-eliteGold flex items-center gap-1 mr-auto">
+                    <svg className="w-4 h-4 text-eliteGold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="2" y="7" width="20" height="10" rx="2" strokeWidth="2"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11.37a2 2 0 11-4 0 2 2 0 014 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 7v10M18 7v10"/></svg>
+                    R$ {Number(product.price).toFixed(2)}
+                  </span>
+                  <button onClick={() => openEditProduct(product)} className="text-blue-400 hover:underline text-xs font-medium">Editar</button>
+                  <button onClick={() => handleDelete(product.id)} className="text-red-400 hover:underline text-xs font-medium">Excluir</button>
+                </div>
+              </div>
+            );
+          })}
+          {filteredProducts.length === 0 && (
+            <p className="text-gray-400 text-center py-8 col-span-full">Nenhum produto encontrado</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
