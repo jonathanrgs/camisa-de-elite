@@ -11,6 +11,7 @@ import authRoutes from './auth.js';
 import userRoutes from './user.js';
 import adminNewRoutes from './admin.js';
 import cartRoutes from './cartRoutes.js';
+import couponRoutes from './couponRoutes.js';
 
 const router = Router();
 
@@ -27,6 +28,9 @@ router.use('/order-link', orderLinkRoutes);
 router.use('/whatsapp', whatsappRoutes);
 router.use('/alerts', alertRoutes);
 router.use('/cart', cartRoutes);
+
+// Rotas de cupom
+router.use('/coupons', couponRoutes);
 
 // Rotas de usuário logado
 router.use('/user', userRoutes);

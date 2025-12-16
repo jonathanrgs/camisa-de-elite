@@ -1,14 +1,67 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 
+
+import { useCoupon } from '../../hooks/useCoupon';
+import { useShippingConfig } from '../../hooks/useShippingConfig';
+
 const FALLBACK_IMAGE = 'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp';
-const FRETE = 15;
+
+
 
 export function FloatingCart() {
   const { items, removeItem, updateQuantity, total, count, stockError, clearStockError } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+
+  // Cupom hook (persistência local)
+  const [persistedCoupon, setPersistedCoupon] = useState(() => {
+    const saved = localStorage.getItem('appliedCoupon');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  // Buscar config de frete do backend
+  const { shipping, loading: shippingLoading } = useShippingConfig();
+
+  // Calcular frete igual ao CheckoutPage (só depois de shipping carregado)
+  const frete = (() => {
+    if (!shipping) return 0;
+    if (shipping.freeShippingMin && total >= shipping.freeShippingMin) return 0;
+    // Não temos cidade/estado no carrinho, então sempre assume fixo
+    return shipping.fixedShipping || 0;
+  })();
+
+  const {
+    couponInput,
+    setCouponInput,
+    appliedCoupon,
+    discount,
+    finalTotal,
+    finalShipping,
+    error: couponError,
+    loading: couponLoading,
+    applyCoupon,
+    removeCoupon
+  } = useCoupon(total, frete); // Passa o frete correto
+
+  // Persistir cupom aplicado
+  useEffect(() => {
+    if (appliedCoupon) {
+      localStorage.setItem('appliedCoupon', JSON.stringify(appliedCoupon));
+      setPersistedCoupon(appliedCoupon);
+    }
+  }, [appliedCoupon]);
+
+  // Carregar cupom salvo ao abrir carrinho
+  useEffect(() => {
+    if (persistedCoupon && !appliedCoupon) {
+      setCouponInput(persistedCoupon.code);
+      // Aplica automaticamente se abrir carrinho e cupom não está no hook
+      applyCoupon();
+    }
+    // eslint-disable-next-line
+  }, [isOpen]);
 
   // Não mostrar na página de carrinho ou checkout
   if (location.pathname === '/carrinho' || location.pathname === '/checkout') {
@@ -144,20 +197,46 @@ export function FloatingCart() {
                 
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-400">Subtotal</span>
-                  <span className="text-white">
-                    R$ {total.toFixed(2).replace('.', ',')}
-                  </span>
+                  <span className="text-white">R$ {total.toFixed(2).replace('.', ',')}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-400">Frete</span>
-                  <span className="text-green-400">R$ {FRETE.toFixed(2).replace('.', ',')}</span>
+                  <span className="text-green-400">{shippingLoading ? 'Carregando...' : `R$ ${frete.toFixed(2).replace('.', ',')}`}</span>
                 </div>
+                {/* Cupom aplicado */}
+                {persistedCoupon && discount > 0 && (
+                  <div className="flex justify-between items-center text-sm text-green-400">
+                    <span>Cupom: <b>{persistedCoupon.code}</b></span>
+                    <span>- R$ {discount.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center pt-2 border-t border-eliteGold/10">
                   <span className="text-white font-medium">Total</span>
                   <span className="text-xl font-bold text-eliteGold">
-                    R$ {(total + FRETE).toFixed(2).replace('.', ',')}
+                    R$ {(finalTotal + frete).toFixed(2).replace('.', ',')}
                   </span>
                 </div>
+                {/* Campo de cupom (só se não aplicado) */}
+                {!persistedCoupon && (
+                  <form className="flex gap-2 mt-2" onSubmit={e => { e.preventDefault(); applyCoupon(); }}>
+                    <input
+                      type="text"
+                      className="flex-1 rounded bg-eliteBlackSoft border border-eliteGold/30 px-2 py-1 text-sm text-white focus:ring-2 focus:ring-eliteGold/50"
+                      placeholder="Cupom de desconto"
+                      value={couponInput}
+                      onChange={e => setCouponInput(e.target.value)}
+                      disabled={couponLoading}
+                    />
+                    <button
+                      type="submit"
+                      className="btn-primary px-3 py-1 text-sm"
+                      disabled={couponLoading || !couponInput}
+                    >
+                      {couponLoading ? 'Aplicando...' : 'Aplicar'}
+                    </button>
+                  </form>
+                )}
+                {couponError && <p className="text-xs text-red-400 mt-1">{couponError}</p>}
                 <Link 
                   to="/carrinho" 
                   onClick={() => setIsOpen(false)}

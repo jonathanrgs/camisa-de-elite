@@ -70,28 +70,7 @@ export function ShippingAdminPage() {
           <label className="block text-gray-300 font-medium mb-1">Frete fixo padrão (R$)</label>
           <input type="number" min="0" value={fixedShipping} onChange={e => setFixedShipping(Number(e.target.value))} className="input" />
         </div>
-        <div className="border-t border-gray-700 pt-6">
-          <h2 className="text-lg text-eliteGold mb-2">Regras por Cidade</h2>
-          <p className="text-gray-400 text-sm mb-2">Adicione regras específicas para cidades: frete fixo ou por km.</p>
-          <CityRulesCRUD cityRules={cityRules} setCityRules={setCityRules} />
-        </div>
-        <div className="border-t border-gray-700 pt-6">
-          <h2 className="text-lg text-eliteGold mb-2">Cálculo por Distância</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-gray-300 font-medium mb-1">CEP de origem</label>
-              <input type="text" value={originCep} onChange={e => setOriginCep(e.target.value)} className="input" />
-            </div>
-            <div>
-              <label className="block text-gray-300 font-medium mb-1">Número</label>
-              <input type="text" value={originNumber} onChange={e => setOriginNumber(e.target.value)} className="input" />
-            </div>
-            <div>
-              <label className="block text-gray-300 font-medium mb-1">Raio de entrega (km)</label>
-              <input type="number" min="1" value={radiusKm} onChange={e => setRadiusKm(Number(e.target.value))} className="input" />
-            </div>
-          </div>
-        </div>
+        {/* Campos de regras por cidade e cálculo por distância ocultados */}
       </div>
       <div className="flex justify-end mt-8">
         <button type="submit" className="btn-primary px-6 py-2">Salvar Configurações</button>

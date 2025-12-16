@@ -115,13 +115,20 @@ export function OrdersPage() {
             ))}
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-gray-700">
-            <p className="text-eliteGold font-semibold">
-              Total: R$ {order.totalAmount.toFixed(2)}
-            </p>
-            <p className="text-gray-400 text-sm">
-              {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
-            </p>
+          <div className="flex flex-col gap-1 pt-4 border-t border-gray-700">
+            {order.discountAmount && order.discountAmount > 0 && (
+              <p className="text-green-400 text-sm">
+                Desconto aplicado: -R$ {order.discountAmount.toFixed(2)}
+              </p>
+            )}
+            <div className="flex items-center justify-between">
+              <p className="text-eliteGold font-semibold">
+                Total: R$ {(order.discountedTotal ?? order.totalAmount).toFixed(2)}
+              </p>
+              <p className="text-gray-400 text-sm">
+                {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
+              </p>
+            </div>
           </div>
         </div>
       ))}

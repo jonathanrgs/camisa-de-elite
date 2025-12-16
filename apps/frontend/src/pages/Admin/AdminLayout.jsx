@@ -17,6 +17,12 @@ export function AdminLayout() {
     shipping: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16V8a2 2 0 012-2h2a2 2 0 012 2v8m0 0a2 2 0 002 2h4a2 2 0 002-2V8a2 2 0 00-2-2h-2a2 2 0 00-2 2v8z" /></svg>,
   };
 
+  const couponIcon = (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6M7 7h.01M17 17h.01M5 11a2 2 0 012-2V7a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 002 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2a2 2 0 00-2-2H7a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2" />
+    </svg>
+  );
+
   const menuItems = [
     { path: '/admin', label: 'Dashboard', icon: iconMap.dashboard, exact: true },
     { path: '/admin/produtos', label: 'Produtos', icon: iconMap.products },
@@ -24,6 +30,7 @@ export function AdminLayout() {
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
     ) },
     { path: '/admin/pedidos', label: 'Pedidos', icon: iconMap.orders },
+    { path: '/admin/cupons', label: 'Cupons', icon: couponIcon },
     { path: '/admin/avaliacoes', label: 'Avaliações', icon: iconMap.reviews },
     { path: '/admin/usuarios', label: 'Usuários', icon: iconMap.users },
     { path: '/admin/frete', label: 'Frete', icon: iconMap.shipping },

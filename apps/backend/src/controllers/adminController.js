@@ -5,10 +5,21 @@
 // Buscar configuração de frete (sempre retorna a mais recente)
 export const getShippingConfig = async (req, res) => {
   try {
-    const config = await prisma.shippingConfig.findFirst({
-      orderBy: { createdAt: 'desc' }
+    const configs = await prisma.shippingConfig.findMany();
+    if (!configs.length) {
+      return res.json({ config: null });
+    }
+    // Sempre retorna o primeiro (único)
+    const config = configs[0];
+    res.json({
+      config: {
+        id: config.id,
+        freeShippingMin: config.freeShippingMin,
+        fixedShipping: config.fixedShipping,
+        createdAt: config.createdAt,
+        updatedAt: config.updatedAt
+      }
     });
-    res.json({ config });
   } catch (error) {
     console.error('Erro ao buscar config de frete:', error);
     res.status(500).json({ error: 'Erro ao buscar configuração de frete' });
@@ -19,6 +30,9 @@ export const getShippingConfig = async (req, res) => {
 export const saveShippingConfig = async (req, res) => {
   try {
     const { freeShippingMin, fixedShipping, cityRules, originCep, originNumber, radiusKm } = req.body;
+    // Remove todos os registros existentes
+    await prisma.shippingConfig.deleteMany();
+    // Cria o novo registro
     const config = await prisma.shippingConfig.create({
       data: {
         freeShippingMin: parseFloat(freeShippingMin),
@@ -29,7 +43,13 @@ export const saveShippingConfig = async (req, res) => {
         radiusKm: radiusKm ? parseInt(radiusKm) : null
       }
     });
-    res.status(201).json({ message: 'Configuração de frete salva', config });
+    res.status(201).json({ message: 'Configuração de frete salva', config: {
+      id: config.id,
+      freeShippingMin: config.freeShippingMin,
+      fixedShipping: config.fixedShipping,
+      createdAt: config.createdAt,
+      updatedAt: config.updatedAt
+    }});
   } catch (error) {
     console.error('Erro ao salvar config de frete:', error);
     res.status(500).json({ error: 'Erro ao salvar configuração de frete' });

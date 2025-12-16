@@ -6,7 +6,7 @@ import { successResponse, paginatedResponse, errorResponse } from '../utils/apiR
 export const orderController = {
   // POST /api/checkout
   async checkout(req, res) {
-    const { customerName, customerPhone, customerEmail, items, address, neighborhood, number, complement, city, state, zipCode, notes } = req.body;
+    const { customerName, customerPhone, customerEmail, items, address, neighborhood, number, complement, city, state, zipCode, notes, couponCode } = req.body;
     // items: [{ productId, size, quantity, customName?, customNumber? }]
 
     if (!customerName || !customerPhone || !items || items.length === 0) {
@@ -49,6 +49,44 @@ export const orderController = {
       totalAmount += Number(product.price) * item.quantity;
     }
 
+
+    // Lógica de cupom e desconto
+    let coupon = null;
+    let couponId = null;
+    let discountAmount = 0;
+    let discountedTotal = totalAmount;
+    if (couponCode) {
+      coupon = await prisma.coupon.findUnique({ where: { code: couponCode.toUpperCase() } });
+      if (!coupon || coupon.isActive === false) {
+        return errorResponse(res, 'Cupom inválido ou inativo', 'INVALID_COUPON', 400);
+      }
+      // Só pode usar se não expirou
+      if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
+        return errorResponse(res, 'Cupom expirado', 'EXPIRED_COUPON', 400);
+      }
+      // Só pode usar uma vez por usuário
+      if (req.user?.id) {
+        const alreadyUsed = await prisma.couponRedemption.findFirst({
+          where: { couponId: coupon.id, userId: req.user.id }
+        });
+        if (alreadyUsed) {
+          return errorResponse(res, 'Cupom já utilizado por esta conta', 'COUPON_ALREADY_USED', 400);
+        }
+      }
+      couponId = coupon.id;
+
+      // Aplicar desconto
+      if (coupon.type === 'percent') {
+        discountAmount = (totalAmount * coupon.value) / 100;
+      } else if (coupon.type === 'fixed') {
+        discountAmount = coupon.value;
+      } else if (coupon.type === 'free_shipping') {
+        discountAmount = 0;
+      }
+      if (discountAmount > totalAmount) discountAmount = totalAmount;
+      discountedTotal = totalAmount - discountAmount;
+    }
+
     // Criar pedido
     const order = await prisma.order.create({
       data: {
@@ -57,6 +95,8 @@ export const orderController = {
         customerPhone,
         customerEmail,
         totalAmount,
+        discountAmount: discountAmount > 0 ? discountAmount : null,
+        discountedTotal: discountedTotal !== totalAmount ? discountedTotal : null,
         address,
         neighborhood,
         number,
@@ -65,6 +105,7 @@ export const orderController = {
         state,
         zipCode,
         notes,
+        couponId,
         items: { create: orderItems }
       },
       include: { items: true }

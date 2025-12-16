@@ -21,7 +21,11 @@ import { asyncHandler } from '../middlewares/asyncHandler.js';
 
 const router = Router();
 
-// Todas as rotas requerem autenticação de admin
+
+// Rotas públicas (sem autenticação)
+router.get('/shipping-config', getShippingConfig);
+
+// Todas as demais rotas requerem autenticação de admin
 router.use(authenticate, authorizeAdmin);
 
 // Dashboard

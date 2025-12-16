@@ -191,9 +191,14 @@ export function OrdersAdminPage() {
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    <p className="text-eliteGold font-semibold">
-                      R$ {order.totalAmount.toFixed(2)}
-                    </p>
+                    <div className="flex flex-col items-end">
+                      {order.discountAmount && order.discountAmount > 0 && (
+                        <span className="text-green-400 text-xs">Desconto: -R$ {order.discountAmount.toFixed(2)}</span>
+                      )}
+                      <span className="text-eliteGold font-semibold">
+                        R$ {(order.discountedTotal ?? order.totalAmount).toFixed(2)}
+                      </span>
+                    </div>
                     <select
                       value={order.status}
                       onChange={(e) => {

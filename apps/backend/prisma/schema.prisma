@@ -1,3 +1,31 @@
+// ============================================
+// CUPONS DE DESCONTO
+// ============================================
+model Coupon {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  type       String   // percent, fixed, free_shipping
+  value      Float
+  minTotal   Float    @default(0)
+  isActive   Boolean  @default(true) // Ativo ou inativo manualmente
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orders     Order[]
+  redemptions CouponRedemption[]
+}
+
+model CouponRedemption {
+  id        String   @id @default(cuid())
+  couponId  String
+  coupon    Coupon  @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id])
+  orderId   String?
+  order     Order?  @relation(fields: [orderId], references: [id])
+  redeemedAt DateTime @default(now())
+}
 // Schema Prisma - Camisa de Elite
 // Usando SQLite para desenvolvimento (sem necessidade de instalar banco)
 
@@ -46,6 +74,7 @@ model User {
 
   orders  Order[]
   reviews Review[]
+  couponRedemptions CouponRedemption[]
 }
 
 // ============================================
@@ -120,7 +149,11 @@ model Order {
   
   items        OrderItem[]
   totalAmount  Float
+  discountAmount Float? // Valor do desconto aplicado (opcional)
+  discountedTotal Float? // Total já com desconto aplicado (opcional)
   status       String   @default("PENDENTE") // PENDENTE, CONFIRMADO, EM_ROTA, ENVIADO, ENTREGUE, CANCELADO
+  couponId     String?
+  coupon       Coupon?  @relation(fields: [couponId], references: [id])
   
   // Dados de entrega
   address      String?
@@ -136,6 +169,7 @@ model Order {
   updatedAt    DateTime @updatedAt
 
   orderLink    OrderLink?
+  couponRedemptions CouponRedemption[]
 }
 
 // ============================================
