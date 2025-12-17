@@ -9,7 +9,7 @@ export default function CouponsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(null); // null ou objeto do cupom
-  const [form, setForm] = useState({ code: '', discount: '', type: 'percent', expiresAt: '', maxUses: '' });
+  const [form, setForm] = useState({ code: '', discount: '', type: 'percent', expiresAt: '', maxUses: '', minTotal: '' });
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
@@ -35,7 +35,8 @@ export default function CouponsAdminPage() {
       discount: coupon.value ?? coupon.discount ?? '',
       type: coupon.type,
       expiresAt: coupon.expiresAt ? coupon.expiresAt.slice(0, 10) : '',
-      maxUses: coupon.maxUses || ''
+      maxUses: coupon.maxUses || '',
+      minTotal: coupon.minTotal ?? ''
     });
     setSuccess('');
     setError('');
@@ -43,7 +44,7 @@ export default function CouponsAdminPage() {
 
   function handleCancel() {
     setEditing(null);
-    setForm({ code: '', discount: '', type: 'percent', expiresAt: '', maxUses: '' });
+    setForm({ code: '', discount: '', type: 'percent', expiresAt: '', maxUses: '', minTotal: '' });
     setSuccess('');
     setError('');
   }
@@ -68,6 +69,7 @@ export default function CouponsAdminPage() {
       const payload = {
         ...form,
         maxUses: form.maxUses ? Number(form.maxUses) : null,
+        minTotal: form.minTotal ? Number(form.minTotal) : 0,
         value: Number(form.discount)
       };
       if (editing) {
@@ -157,6 +159,17 @@ export default function CouponsAdminPage() {
             className="flex-1 h-9 text-xs bg-eliteBlackCard border-eliteGold/30 text-eliteGold placeholder:text-eliteGold/60 focus:ring-eliteGold/40 focus:border-eliteGold/60 align-middle min-w-[70px]"
             style={{ minHeight: 36 }}
           />
+          <Input
+            id="minTotal"
+            placeholder="Mínimo para usar"
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.minTotal}
+            onChange={e => setForm({ ...form, minTotal: e.target.value })}
+            className="flex-1 h-9 text-xs bg-eliteBlackCard border-eliteGold/30 text-eliteGold placeholder:text-eliteGold/60 focus:ring-eliteGold/40 focus:border-eliteGold/60 align-middle min-w-[90px]"
+            style={{ minHeight: 36 }}
+          />
           <Button type="submit" className="flex-1 min-w-[90px] h-9 text-xs font-bold bg-eliteGold text-eliteBlack rounded shadow hover:bg-yellow-400 transition align-middle" style={{ minHeight: 36 }}>{editing ? 'Salvar' : 'Criar'}</Button>
           {editing && <Button type="button" variant="secondary" onClick={handleCancel} className="flex-1 min-w-[90px] h-9 text-xs rounded align-middle" style={{ minHeight: 36 }}>Cancelar</Button>}
           {success && <span className="text-green-400 ml-2 text-xs">{success}</span>}
@@ -188,6 +201,9 @@ export default function CouponsAdminPage() {
                     </span>
                   </div>
                   <span className="text-xs text-gray-400 ml-2">Usos: {coupon.redemptions || 0}</span>
+                  {coupon.minTotal > 0 && (
+                    <span className="text-xs text-yellow-400 ml-2">Mín. R$ {Number(coupon.minTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button size="xs" variant="secondary" onClick={e => { e.stopPropagation(); handleEdit(coupon); }} className="rounded px-3 py-1 text-xs">Editar</Button>
@@ -200,6 +216,7 @@ export default function CouponsAdminPage() {
                   <div><span className="text-gray-400">Tipo:</span> {coupon.type === 'percent' ? 'Porcentagem' : coupon.type === 'fixed' ? 'Valor Fixo' : coupon.type}</div>
                   <div><span className="text-gray-400">Expira em:</span> {coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString() : '-'}</div>
                   <div><span className="text-gray-400">Limite:</span> {coupon.maxUses || '-'}</div>
+                  <div><span className="text-gray-400">Mínimo para usar:</span> {coupon.minTotal > 0 ? `R$ ${Number(coupon.minTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}</div>
                 </div>
               )}
             </div>
