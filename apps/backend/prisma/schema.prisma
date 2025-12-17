@@ -7,6 +7,8 @@ model Coupon {
   type       String   // percent, fixed, free_shipping
   value      Float
   minTotal   Float    @default(0)
+  maxUses    Int?
+  maxUsesPerUser Int?
   isActive   Boolean  @default(true) // Ativo ou inativo manualmente
   expiresAt  DateTime?
   createdAt  DateTime @default(now())

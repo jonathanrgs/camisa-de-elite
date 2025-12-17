@@ -55,7 +55,26 @@ export function useCoupon(cartTotal, shipping) {
       const coupon = JSON.parse(saved);
       setAppliedCoupon(coupon);
       setCouponInput(coupon.code);
+    } else {
+      setAppliedCoupon(null);
+      setCouponInput('');
     }
+
+    // Sincronizar entre abas/páginas
+    const handleStorage = (e) => {
+      if (e.key === 'appliedCoupon') {
+        if (e.newValue) {
+          const coupon = JSON.parse(e.newValue);
+          setAppliedCoupon(coupon);
+          setCouponInput(coupon.code);
+        } else {
+          setAppliedCoupon(null);
+          setCouponInput('');
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   return {

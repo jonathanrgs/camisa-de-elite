@@ -19,7 +19,7 @@ const couponController = {
   async toggleActive(req, res) {
     try {
       const { id } = req.params;
-      const coupon = await prisma.coupon.findUnique({ where: { id } });
+        const coupon = await prisma.coupon.findUnique({ where: { id }, data });
       if (!coupon) return res.status(404).json({ error: 'Cupom não encontrado.' });
       const updated = await prisma.coupon.update({ where: { id }, data: { isActive: !coupon.isActive } });
       res.json(updated);
@@ -61,7 +61,7 @@ const couponController = {
         expiresAt: expiresAt ? new Date(expiresAt) : null,
         maxUses: maxUses ? Number(maxUses) : null
       };
-      const coupon = await prisma.coupon.update({ where: { id: Number(id) }, data });
+        const coupon = await prisma.coupon.update({ where: { id }, data });
       res.json(coupon);
     } catch (err) {
       res.status(500).json({ error: 'Erro ao atualizar cupom.' });
@@ -72,7 +72,7 @@ const couponController = {
   async remove(req, res) {
     try {
       const { id } = req.params;
-      await prisma.coupon.delete({ where: { id: Number(id) } });
+        await prisma.coupon.delete({ where: { id } });
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: 'Erro ao remover cupom.' });

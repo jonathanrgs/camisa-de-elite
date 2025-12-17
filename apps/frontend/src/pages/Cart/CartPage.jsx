@@ -3,6 +3,7 @@ import { useCart } from '../../hooks/useCart';
 import { Button } from '../../components';
 import { Input } from '../../components/ui/Input';
 import { useShippingConfig } from '../../hooks/useShippingConfig';
+import { calculateShipping } from '../../utils/calculateShipping';
 import React, { useState, useEffect } from 'react';
 
 // Fallback
@@ -12,23 +13,49 @@ function CartPage() {
   const { items, removeItem, updateQuantity, total, count, stockError, clearStockError } = useCart();
   const { shipping, loading: shippingLoading } = useShippingConfig();
 
-  // Cálculo do frete igual ao checkout
-  const frete = React.useMemo(() => {
-    if (!shipping) return 0;
-    if (shipping.freeShippingMin && Number(total) >= Number(shipping.freeShippingMin)) return 0;
-    // Não temos cidade/estado no carrinho, então sempre assume fixo
-    return Number(shipping.fixedShipping) || 0;
-  }, [shipping, total]);
+  // Cálculo do frete padronizado
+  const frete = React.useMemo(() => calculateShipping({ shipping, total }), [shipping, total]);
 
-  const [couponState, setCouponState] = useState({
-    couponInput: '',
-    appliedCoupon: null,
-    discount: 0,
-    finalTotal: total,
-    finalShipping: frete,
-    error: null,
-    loading: false
+  const [couponState, setCouponState] = useState(() => {
+    const saved = localStorage.getItem('appliedCoupon');
+    let coupon = null;
+    let couponInput = '';
+    if (saved) {
+      try {
+        coupon = JSON.parse(saved);
+        couponInput = coupon.code;
+      } catch {}
+    }
+    return {
+      couponInput,
+      appliedCoupon: coupon,
+      discount: 0,
+      finalTotal: total,
+      finalShipping: frete,
+      error: null,
+      loading: false
+    };
   });
+  // Ao montar, se houver cupom salvo, aplicar automaticamente
+  useEffect(() => {
+    if (couponState.appliedCoupon) {
+      // Só aplica se não tiver desconto já calculado
+      if (couponState.discount === 0) {
+        (async () => {
+          setCouponState(s => ({ ...s, loading: true }));
+          const calc = await import('../../services/couponApi').then(({ couponApi }) => couponApi.calculateDiscount(couponState.appliedCoupon, total, frete));
+          setCouponState(s => ({
+            ...s,
+            discount: calc.discount,
+            finalTotal: calc.total,
+            finalShipping: calc.shipping,
+            loading: false
+          }));
+        })();
+      }
+    }
+    // eslint-disable-next-line
+  }, []);
 
   const {
     couponInput,

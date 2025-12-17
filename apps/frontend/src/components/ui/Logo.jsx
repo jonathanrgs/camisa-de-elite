@@ -6,6 +6,7 @@ export function Logo({ className = '', size = 'md', showText = true }) {
     md: { logo: 'w-10 h-12', text: 'text-lg' },
     lg: { logo: 'w-16 h-20', text: 'text-2xl' },
     xl: { logo: 'w-24 h-28', text: 'text-3xl' },
+    xxl: { logo: 'w-40 h-44', text: 'text-4xl' },
   };
 
   const s = sizes[size] || sizes.md;
@@ -16,7 +17,7 @@ export function Logo({ className = '', size = 'md', showText = true }) {
         src={logo}
         alt="Logo Camisa de Elite"
         className={s.logo + ' object-contain'}
-        style={{ maxHeight: '64px', maxWidth: '64px' }}
+        style={size === 'xxl' ? { maxHeight: '176px', maxWidth: '176px' } : { maxHeight: '64px', maxWidth: '64px' }}
         draggable={false}
       />
 

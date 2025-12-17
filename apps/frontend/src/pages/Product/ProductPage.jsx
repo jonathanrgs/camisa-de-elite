@@ -90,7 +90,35 @@ export function ProductPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Galeria */}
-        <ProductGallery images={product.images} />
+        <div>
+          <ProductGallery images={product.images} />
+          {/* Tabela completa de medidas - AGORA abaixo da imagem */}
+          <div className="mt-6 overflow-x-auto">
+            <table className="min-w-full text-xs text-center border border-eliteGold/20 rounded-lg bg-eliteBlackSoft">
+              <thead>
+                <tr className="bg-eliteGold/10 text-eliteGold">
+                  <th className="p-2">Tamanho</th>
+                  <th className="p-2">Comprimento (cm)</th>
+                  <th className="p-2">Largura (cm)</th>
+                  <th className="p-2">Altura (cm)</th>
+                  <th className="p-2">Peso (kg)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(MEASURES).map(([size, m]) => (
+                  <tr key={size} className="border-t border-eliteGold/10">
+                    <td className="p-2 font-bold text-eliteGold">{size}</td>
+                    <td className="p-2 text-white">{m.comprimento}</td>
+                    <td className="p-2 text-white">{m.largura}</td>
+                    <td className="p-2 text-white">{m.altura}</td>
+                    <td className="p-2 text-white">{m.peso}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-xs text-gray-500 mt-2">Considerar margem de erro de 1-3 cm em cada medida.</p>
+          </div>
+        </div>
 
         {/* Info */}
         <div className="space-y-6">
@@ -186,31 +214,7 @@ export function ProductPage() {
             )}
 
             {/* Tabela completa de medidas */}
-            <div className="mt-6 overflow-x-auto">
-              <table className="min-w-full text-xs text-center border border-eliteGold/20 rounded-lg bg-eliteBlackSoft">
-                <thead>
-                  <tr className="bg-eliteGold/10 text-eliteGold">
-                    <th className="p-2">Tamanho</th>
-                    <th className="p-2">Comprimento (cm)</th>
-                    <th className="p-2">Largura (cm)</th>
-                    <th className="p-2">Altura (cm)</th>
-                    <th className="p-2">Peso (kg)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(MEASURES).map(([size, m]) => (
-                    <tr key={size} className="border-t border-eliteGold/10">
-                      <td className="p-2 font-bold text-eliteGold">{size}</td>
-                      <td className="p-2 text-white">{m.comprimento}</td>
-                      <td className="p-2 text-white">{m.largura}</td>
-                      <td className="p-2 text-white">{m.altura}</td>
-                      <td className="p-2 text-white">{m.peso}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="text-xs text-gray-500 mt-2">Considerar margem de erro de 1-3 cm em cada medida.</p>
-            </div>
+            {/* Tabela removida daqui, agora está abaixo da galeria */}
           </div>
 
           {/* Adicionar ao carrinho */}

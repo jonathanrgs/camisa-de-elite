@@ -39,7 +39,7 @@ export function ProductGallery({ images = [] }) {
     <div className="space-y-4">
       {/* Imagem principal com zoom */}
       <div 
-        className="aspect-[3/4] overflow-hidden rounded-lg bg-eliteBlackCard cursor-zoom-in relative"
+        className="aspect-square overflow-hidden rounded-lg bg-eliteBlackCard cursor-zoom-in relative flex justify-center items-center max-w-md mx-auto"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onMouseMove={handleMouseMove}

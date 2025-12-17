@@ -40,7 +40,7 @@ export function HomePage() {
 
         <div className="relative z-10 text-center px-4">
           <div className="mb-8 flex justify-center animate-fade-in-down">
-            <Logo size="xl" showText={false} />
+            <Logo size="xxl" showText={false} />
           </div>
 
           <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 animate-fade-in">

@@ -4,31 +4,15 @@ import { useCart } from '../../hooks/useCart';
 import { useAuth } from '../../hooks/useAuth';
 import { Button, Spinner } from '../../components';
 import { Input } from '../../components/ui/Input';
-import { useCoupon } from '../../hooks/useCoupon';
+// import { useCoupon } from '../../hooks/useCoupon';
+import { calculateShipping } from '../../utils/calculateShipping';
 import { CONFIG } from '../../config';
 import { authService } from '../../services/authService';
 import { orderService } from '../../services/orderService';
 import { cartService } from '../../services/cartService';
+import { useShippingConfig } from '../../hooks/useShippingConfig';
 // Valor fixo de frete removido. Sempre usar config do banco.
 
-// Hook para buscar config de frete
-function useShippingConfig() {
-  const [shipping, setShipping] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  useEffect(() => {
-    import('../../services/adminService').then(({ adminService }) => {
-      adminService.getShippingConfig().then(({ config }) => {
-        setShipping(config);
-        setLoading(false);
-      }).catch(() => {
-        setError('Erro ao carregar regras de frete');
-        setLoading(false);
-      });
-    });
-  }, []);
-  return { shipping, loading, error };
-}
 
 
 export function CheckoutPage() {
@@ -58,37 +42,124 @@ export function CheckoutPage() {
   const [createAccount, setCreateAccount] = useState(false);
   const [accountError, setAccountError] = useState('');
 
-  // Função para calcular o frete baseada nas regras do banco
-  // Frete: fixo para Uberaba e grátis acima do valor mínimo
-  const frete = useMemo(() => {
-    if (!shipping) return 0;
-    // Só frete grátis se total >= mínimo
-    if (shipping.freeShippingMin && Number(total) >= Number(shipping.freeShippingMin)) return 0;
-    // Região de Uberaba (MG) - frete fixo
-    if (
-      (form.city?.trim().toLowerCase() === 'uberaba' &&
-      form.state?.trim().toLowerCase() === 'mg')
-      || !form.city // Se não informado, assume fixo
-    ) {
-      return Number(shipping.fixedShipping) || 0;
-    }
-    // Para outras cidades, pode-se expandir depois
-    return Number(shipping.fixedShipping) || 0;
-  }, [shipping, total, form.city, form.state]);
+  // Função para calcular o frete baseada nas regras do banco (padronizada)
+  const frete = useMemo(() => calculateShipping({ shipping, total, city: form.city, state: form.state }), [shipping, total, form.city, form.state]);
 
-  // Cupom hook (usar frete atualizado)
+
+
+  // Estado do cupom (lógica igual CartPage)
+  const [couponState, setCouponState] = useState(() => {
+    const saved = localStorage.getItem('appliedCoupon');
+    let coupon = null;
+    let couponInput = '';
+    if (saved) {
+      try {
+        coupon = JSON.parse(saved);
+        couponInput = coupon.code;
+      } catch {}
+    }
+    return {
+      couponInput,
+      appliedCoupon: coupon,
+      discount: 0,
+      finalTotal: total,
+      finalShipping: frete,
+      error: null,
+      loading: false
+    };
+  });
+
   const {
     couponInput,
-    setCouponInput,
     appliedCoupon,
     discount,
     finalTotal,
     finalShipping,
     error: couponError,
-    loading: couponLoading,
-    applyCoupon,
-    removeCoupon
-  } = useCoupon(total, frete);
+    loading: couponLoading
+  } = couponState;
+
+
+  const setCouponInput = (val) => setCouponState((s) => ({ ...s, couponInput: val }));
+  const setCouponLoading = (val) => setCouponState((s) => ({ ...s, loading: val }));
+  const setError = (val) => setCouponState((s) => ({ ...s, error: val }));
+
+  // Aplica cupom
+  const applyCoupon = async () => {
+    setCouponLoading(true);
+    setError(null);
+    const result = await import('../../services/couponApi').then(({ couponApi }) => couponApi.checkCoupon(couponInput, total));
+    if (!result.valid) {
+      setCouponState((s) => ({
+        ...s,
+        appliedCoupon: null,
+        discount: 0,
+        finalTotal: total,
+        finalShipping: frete,
+        error: result.reason
+      }));
+      localStorage.removeItem('appliedCoupon');
+    } else {
+      localStorage.setItem('appliedCoupon', JSON.stringify(result.coupon));
+      const calc = await import('../../services/couponApi').then(({ couponApi }) => couponApi.calculateDiscount(result.coupon, total, frete));
+      setCouponState((s) => ({
+        ...s,
+        appliedCoupon: result.coupon,
+        discount: calc.discount,
+        finalTotal: calc.total,
+        finalShipping: calc.shipping,
+        error: null
+      }));
+    }
+    setCouponLoading(false);
+  };
+
+  // Remove cupom
+  const removeCoupon = () => {
+    setCouponState((s) => ({
+      ...s,
+      appliedCoupon: null,
+      discount: 0,
+      finalTotal: total,
+      finalShipping: frete,
+      error: null,
+      couponInput: ''
+    }));
+    localStorage.removeItem('appliedCoupon');
+  };
+
+  // Aplica cupom salvo ao montar
+  useEffect(() => {
+    if (couponState.appliedCoupon && couponState.discount === 0) {
+      (async () => {
+        setCouponState(s => ({ ...s, loading: true }));
+        const calc = await import('../../services/couponApi').then(({ couponApi }) => couponApi.calculateDiscount(couponState.appliedCoupon, total, frete));
+        setCouponState(s => ({
+          ...s,
+          discount: calc.discount,
+          finalTotal: calc.total,
+          finalShipping: calc.shipping,
+          loading: false
+        }));
+      })();
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  // Atualiza desconto e total sempre que total ou frete mudarem
+  useEffect(() => {
+    if (appliedCoupon) {
+      applyCoupon();
+    } else {
+      setCouponState((s) => ({
+        ...s,
+        discount: 0,
+        finalTotal: total,
+        finalShipping: frete
+      }));
+    }
+    // eslint-disable-next-line
+  }, [total, frete]);
 
   const totalWithShipping = total + frete;
   const hasPersonalData = isAuthenticated && user && (user.name || user.phone);
@@ -371,15 +442,41 @@ export function CheckoutPage() {
                 <hr className="border-eliteGold/20 my-2" />
                 <div className="flex justify-between text-gray-400">
                   <span>Subtotal</span>
-                  <span>R$ {orderData?.total && frete !== undefined ? (orderData.total - frete).toFixed(2).replace('.', ',') : '0,00'}</span>
+                  <span>R$ {total.toFixed(2).replace('.', ',')}</span>
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Frete</span>
-                  <span>{shippingLoading ? 'Carregando...' : `R$ ${frete.toFixed(2).replace('.', ',')}`}</span>
+                  <span className="text-green-400">
+                    {shippingLoading ? 'Carregando...' : `R$ ${finalShipping.toFixed(2).replace('.', ',')}`}
+                    {!shippingLoading && shipping && (
+                      <>
+                        {shipping.freeShippingMin && Number(total) >= Number(shipping.freeShippingMin) && (
+                          <span className="ml-2 text-xs text-eliteGold">(Frete grátis acima de R$ {Number(shipping.freeShippingMin).toFixed(2).replace('.', ',')})</span>
+                        )}
+                        {!(shipping.freeShippingMin && Number(total) >= Number(shipping.freeShippingMin)) && shipping.fixedShipping && (
+                          <span className="ml-2 text-xs text-eliteGold">(Fixo R$ {Number(shipping.fixedShipping).toFixed(2).replace('.', ',')})</span>
+                        )}
+                      </>
+                    )}
+                  </span>
                 </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-green-400">
+                    <span>
+                      Cupom: <span className="font-bold">{appliedCoupon.code}</span>
+                      {appliedCoupon.type === 'percent' && (
+                        <span className="ml-2 text-xs text-eliteGold">({appliedCoupon.value}% OFF)</span>
+                      )}
+                      {appliedCoupon.type === 'fixed' && (
+                        <span className="ml-2 text-xs text-eliteGold">(R$ {Number(appliedCoupon.value).toFixed(2).replace('.', ',')} OFF)</span>
+                      )}
+                    </span>
+                    <span>- R$ {discount.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-white font-bold text-base pt-2">
                   <span>Total</span>
-                  <span className="text-eliteGold">R$ {orderData?.total.toFixed(2).replace('.', ',')}</span>
+                  <span className="text-eliteGold">R$ {orderData?.total ? orderData.total.toFixed(2).replace('.', ',') : (finalTotal + finalShipping).toFixed(2).replace('.', ',')}</span>
                 </div>
               </div>
             </div>
@@ -781,11 +878,31 @@ export function CheckoutPage() {
             </div>
             <div className="flex justify-between text-gray-400">
               <span>Frete</span>
-              <span className="text-green-400">{shippingLoading ? 'Carregando...' : `R$ ${finalShipping.toFixed(2).replace('.', ',')}`}</span>
+              <span className="text-green-400">
+                {shippingLoading ? 'Carregando...' : `R$ ${finalShipping.toFixed(2).replace('.', ',')}`}
+                {!shippingLoading && shipping && (
+                  <>
+                    {shipping.freeShippingMin && Number(total) >= Number(shipping.freeShippingMin) && (
+                      <span className="ml-2 text-xs text-eliteGold">(Frete grátis acima de R$ {Number(shipping.freeShippingMin).toFixed(2).replace('.', ',')})</span>
+                    )}
+                    {!(shipping.freeShippingMin && Number(total) >= Number(shipping.freeShippingMin)) && shipping.fixedShipping && (
+                      <span className="ml-2 text-xs text-eliteGold">(Fixo R$ {Number(shipping.fixedShipping).toFixed(2).replace('.', ',')})</span>
+                    )}
+                  </>
+                )}
+              </span>
             </div>
             {appliedCoupon && (
               <div className="flex justify-between text-green-400">
-                <span>Cupom: <span className="font-bold">{appliedCoupon.code}</span></span>
+                <span>
+                  Cupom: <span className="font-bold">{appliedCoupon.code}</span>
+                  {appliedCoupon.type === 'percent' && (
+                    <span className="ml-2 text-xs text-eliteGold">({appliedCoupon.value}% OFF)</span>
+                  )}
+                  {appliedCoupon.type === 'fixed' && (
+                    <span className="ml-2 text-xs text-eliteGold">(R$ {Number(appliedCoupon.value).toFixed(2).replace('.', ',')} OFF)</span>
+                  )}
+                </span>
                 <span>- R$ {discount.toFixed(2).replace('.', ',')}</span>
               </div>
             )}
