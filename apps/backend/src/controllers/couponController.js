@@ -86,7 +86,23 @@ const couponController = {
     if (!coupon) return res.status(404).json({ valid: false, reason: 'Cupom inválido.' });
     if (coupon.expiresAt && new Date() > coupon.expiresAt) return res.status(400).json({ valid: false, reason: 'Cupom expirado.' });
     if (coupon.minTotal && cartTotal < coupon.minTotal) return res.status(400).json({ valid: false, reason: `Valor mínimo de R$ ${coupon.minTotal}` });
-    // TODO: checar maxUses, maxUsesPerUser, etc.
+
+    // Checar limite global de usos
+    if (coupon.maxUses !== null && coupon.maxUses !== undefined) {
+      const totalRedemptions = await prisma.couponRedemption.count({ where: { couponId: coupon.id } });
+      if (totalRedemptions >= coupon.maxUses) {
+        return res.status(400).json({ valid: false, reason: 'Limite de usos do cupom atingido.' });
+      }
+    }
+
+    // Checar limite por usuário
+    if (coupon.maxUsesPerUser !== null && coupon.maxUsesPerUser !== undefined && req.user?.id) {
+      const userRedemptions = await prisma.couponRedemption.count({ where: { couponId: coupon.id, userId: req.user.id } });
+      if (userRedemptions >= coupon.maxUsesPerUser) {
+        return res.status(400).json({ valid: false, reason: 'Você já atingiu o limite de uso deste cupom.' });
+      }
+    }
+
     return res.json({ valid: true, coupon });
   },
 

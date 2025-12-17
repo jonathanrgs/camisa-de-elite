@@ -64,13 +64,18 @@ export const orderController = {
       if (coupon.expiresAt && new Date(coupon.expiresAt) < new Date()) {
         return errorResponse(res, 'Cupom expirado', 'EXPIRED_COUPON', 400);
       }
-      // Só pode usar uma vez por usuário
-      if (req.user?.id) {
-        const alreadyUsed = await prisma.couponRedemption.findFirst({
-          where: { couponId: coupon.id, userId: req.user.id }
-        });
-        if (alreadyUsed) {
-          return errorResponse(res, 'Cupom já utilizado por esta conta', 'COUPON_ALREADY_USED', 400);
+      // Checar limite global de usos
+      if (coupon.maxUses !== null && coupon.maxUses !== undefined) {
+        const totalRedemptions = await prisma.couponRedemption.count({ where: { couponId: coupon.id } });
+        if (totalRedemptions >= coupon.maxUses) {
+          return errorResponse(res, 'Limite de usos do cupom atingido', 'COUPON_MAX_USES', 400);
+        }
+      }
+      // Checar limite por usuário
+      if (coupon.maxUsesPerUser !== null && coupon.maxUsesPerUser !== undefined && req.user?.id) {
+        const userRedemptions = await prisma.couponRedemption.count({ where: { couponId: coupon.id, userId: req.user.id } });
+        if (userRedemptions >= coupon.maxUsesPerUser) {
+          return errorResponse(res, 'Você já atingiu o limite de uso deste cupom', 'COUPON_MAX_USES_USER', 400);
         }
       }
       couponId = coupon.id;
@@ -111,6 +116,17 @@ export const orderController = {
       },
       include: { items: true }
     });
+
+    // Registrar uso do cupom
+    if (couponId) {
+      await prisma.couponRedemption.create({
+        data: {
+          couponId,
+          userId: req.user?.id || null,
+          orderId: order.id
+        }
+      });
+    }
 
     // Gerar link com token
     const token = crypto.randomBytes(16).toString('hex');
