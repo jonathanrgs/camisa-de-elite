@@ -7,7 +7,12 @@ export default defineConfig({
     port: 3000,
     allowedHosts: ['localhost', '.ngrok-free.dev', '.ngrok.io'],
     proxy: {
-      '/api': 'http://localhost:3001'
+      '/api': {
+        // target: 'http://localhost:3001',
+        target: 'https://camisa-de-elite-backend.vercel.app',
+        changeOrigin: true,
+        secure: true
+      }
     }
   }
 })
