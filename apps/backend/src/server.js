@@ -12,7 +12,8 @@ app.use(
   cors({
     origin: [
       'https://camisa-de-elite-frontend.vercel.app',
-      'https://camisa-de-elite-frontend-git-prec-90f3dd-jonathan-ryans-projects.vercel.app'
+      'https://camisa-de-elite-frontend-git-prec-90f3dd-jonathan-ryans-projects.vercel.app',
+      'https://camisa-de-elite-frontend.onrender.com'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

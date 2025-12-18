@@ -9,7 +9,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         // target: 'http://localhost:3001',
-        target: 'https://camisa-de-elite-backend.vercel.app',
+        target: 'https://camisa-de-elite.onrender.com',
         changeOrigin: true,
         secure: true
       }
