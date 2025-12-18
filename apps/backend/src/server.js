@@ -8,7 +8,17 @@ import { cartController } from './controllers/cartController.js';
 const app = express();
 
 // Middlewares globais
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      'https://camisa-de-elite-frontend.vercel.app',
+      'https://camisa-de-elite-frontend-git-prec-90f3dd-jonathan-ryans-projects.vercel.app'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  })
+);
 app.use(express.json());
 
 // Rotas
