@@ -24,9 +24,12 @@ app.use(express.json());
 // Rotas
 app.use('/api', routes);
 
+
 // Handlers de erro
 app.use(notFoundHandler);
 app.use(errorHandler);
+
+export default app;
 
 // Job de limpeza de reservas expiradas (roda a cada 5 minutos)
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
