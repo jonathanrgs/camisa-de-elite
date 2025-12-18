@@ -242,13 +242,11 @@ export const updateProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-
-    await prisma.product.delete({ where: { id } });
-
-    res.json({ message: 'Produto deletado com sucesso' });
+    const product = await prisma.product.update({ where: { id }, data: { isActive: false } });
+    res.json({ message: 'Produto excluído (soft delete) com sucesso', product });
   } catch (error) {
-    console.error('Erro ao deletar produto:', error);
-    res.status(500).json({ error: 'Erro ao deletar produto' });
+    console.error('Erro ao excluir produto:', error);
+    res.status(500).json({ error: 'Erro ao excluir produto' });
   }
 };
 
