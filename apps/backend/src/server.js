@@ -13,7 +13,9 @@ app.use(
     origin: [
       'https://camisa-de-elite-frontend.vercel.app',
       'https://camisa-de-elite-frontend-git-prec-90f3dd-jonathan-ryans-projects.vercel.app',
-      'https://camisa-de-elite-frontend.onrender.com'
+      'https://camisa-de-elite-frontend.onrender.com',
+      'http://localhost:3000',
+      'http://localhost:3001'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

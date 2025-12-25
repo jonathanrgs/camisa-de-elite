@@ -4,6 +4,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  deleteProductPermanent,
   exportProductsCSV,
   getAllOrders,
   updateOrderStatus,
@@ -35,7 +36,7 @@ router.get('/stats', getStats);
 router.get('/products', getAllProducts);
 router.post('/products', createProduct);
 router.put('/products/:id', updateProduct);
-router.delete('/products/:id', deleteProduct);
+router.delete('/products/:id', deleteProductPermanent);
 router.get('/products/export/csv', exportProductsCSV);
 
 // Upload de imagens de produtos

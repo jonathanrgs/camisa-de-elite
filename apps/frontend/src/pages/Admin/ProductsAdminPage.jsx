@@ -689,6 +689,7 @@ export function ProductsAdminPage() {
                   <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Categoria</th>
                   <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Preço</th>
                   <th className="text-left text-gray-400 text-sm font-medium px-4 py-3">Estoque</th>
+                  <th className="text-center text-gray-400 text-sm font-medium px-4 py-3">Status</th>
                   <th className="text-right text-gray-400 text-sm font-medium px-4 py-3">Ações</th>
                 </tr>
               </thead>
@@ -722,6 +723,13 @@ export function ProductsAdminPage() {
                         <span className={`text-sm ${totalStock > 10 ? 'text-green-400' : totalStock > 0 ? 'text-yellow-400' : 'text-red-400'}`}>
                           {totalStock} un
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {product.isActive ? (
+                          <span className="inline-flex items-center gap-1 text-green-400 font-semibold text-xs"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Ativo</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-gray-500 font-semibold text-xs"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>Inativo</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
@@ -775,6 +783,11 @@ export function ProductsAdminPage() {
                     <svg className="w-4 h-4 text-eliteGold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="2" y="7" width="20" height="10" rx="2" strokeWidth="2"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11.37a2 2 0 11-4 0 2 2 0 014 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 7v10M18 7v10"/></svg>
                     R$ {Number(product.price).toFixed(2)}
                   </span>
+                  {product.isActive ? (
+                    <span className="inline-flex items-center gap-1 text-green-400 font-semibold text-xs mr-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Ativo</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-gray-500 font-semibold text-xs mr-2"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>Inativo</span>
+                  )}
                   <button onClick={() => openEditProduct(product)} className="text-blue-400 hover:underline text-xs font-medium">Editar</button>
                   <button onClick={() => handleDelete(product.id)} className="text-red-400 hover:underline text-xs font-medium">Excluir</button>
                 </div>

@@ -1,3 +1,15 @@
+// Exclusão definitiva de produto
+export const deleteProductPermanent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Remove o produto do banco de dados
+    await prisma.product.delete({ where: { id } });
+    res.json({ message: 'Produto excluído permanentemente com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir permanentemente produto:', error);
+    res.status(500).json({ error: 'Erro ao excluir permanentemente produto' });
+  }
+};
 // ========================
 // FRETE (SHIPPING CONFIG)
 // ========================
