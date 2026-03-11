@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
-import { CityRulesCRUD } from './CityRulesCRUD';
 
 
 export function ShippingAdminPage() {
@@ -11,7 +10,7 @@ export function ShippingAdminPage() {
   const [originNumber, setOriginNumber] = useState('');
   const [radiusKm, setRadiusKm] = useState(10);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     async function fetchConfig() {
@@ -26,8 +25,8 @@ export function ShippingAdminPage() {
           setOriginNumber(config.originNumber || '');
           setRadiusKm(config.radiusKm || 10);
         }
-      } catch (err) {
-        setMessage('Erro ao carregar configuração de frete');
+      } catch {
+        setMessage({ type: 'error', text: 'Erro ao carregar configuração de frete' });
       } finally {
         setLoading(false);
       }
@@ -37,7 +36,7 @@ export function ShippingAdminPage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setMessage('');
+    setMessage({ type: '', text: '' });
     try {
       await adminService.saveShippingConfig({
         freeShippingMin,
@@ -47,34 +46,66 @@ export function ShippingAdminPage() {
         originNumber,
         radiusKm
       });
-      setMessage('Configuração salva com sucesso!');
-    } catch (err) {
-      setMessage('Erro ao salvar configuração');
+      setMessage({ type: 'success', text: 'Configuração salva com sucesso!' });
+    } catch {
+      setMessage({ type: 'error', text: 'Erro ao salvar configuração' });
     }
   };
 
+  const inputClass = "w-full bg-white/[0.03] border border-gray-800 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-eliteGold/50 focus:outline-none transition-colors";
+
   if (loading) {
-    return <div className="text-center text-gray-400 py-12">Carregando configuração...</div>;
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="animate-spin w-8 h-8 border-2 border-eliteGold border-t-transparent rounded-full"></div>
+      </div>
+    );
   }
 
   return (
-    <form onSubmit={handleSave} className="card max-w-2xl mx-auto mt-8 p-8">
-      <h1 className="font-heading text-2xl text-eliteGold mb-6">Configuração de Frete</h1>
-      {message && <div className="mb-4 text-center text-sm text-eliteGold">{message}</div>}
-      <div className="space-y-6">
-        <div>
-          <label className="block text-gray-300 font-medium mb-1">Valor mínimo para frete grátis</label>
-          <input type="number" min="0" value={freeShippingMin} onChange={e => setFreeShippingMin(Number(e.target.value))} className="input" />
-        </div>
-        <div>
-          <label className="block text-gray-300 font-medium mb-1">Frete fixo padrão (R$)</label>
-          <input type="number" min="0" value={fixedShipping} onChange={e => setFixedShipping(Number(e.target.value))} className="input" />
-        </div>
-        {/* Campos de regras por cidade e cálculo por distância ocultados */}
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h1 className="font-heading text-2xl lg:text-3xl text-white tracking-tight">Frete</h1>
+        <p className="text-gray-500 text-sm mt-1">Configure valores e regras de entrega</p>
       </div>
-      <div className="flex justify-end mt-8">
-        <button type="submit" className="btn-primary px-6 py-2">Salvar Configurações</button>
-      </div>
-    </form>
+
+      {message.text && (
+        <div className={`p-3 rounded-lg text-sm ${
+          message.type === 'success' 
+            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+            : 'bg-red-500/10 border border-red-500/20 text-red-400'
+        }`}>
+          {message.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSave} className="space-y-6">
+        <div className="bg-gray-900/30 border border-gray-800/60 rounded-xl p-5">
+          <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-4">Configuração Geral</p>
+          
+          <div className="grid sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">Valor mínimo para frete grátis (R$)</label>
+              <input type="number" min="0" step="0.01" value={freeShippingMin} onChange={e => setFreeShippingMin(Number(e.target.value))} className={inputClass} />
+              <p className="text-[11px] text-gray-600 mt-1">Pedidos acima desse valor terão frete grátis</p>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">Frete fixo padrão (R$)</label>
+              <input type="number" min="0" step="0.01" value={fixedShipping} onChange={e => setFixedShipping(Number(e.target.value))} className={inputClass} />
+              <p className="text-[11px] text-gray-600 mt-1">Valor cobrado quando não há frete grátis</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button type="submit" className="flex items-center gap-2 px-5 py-2 bg-eliteGold/15 hover:bg-eliteGold/25 text-eliteGold rounded-lg text-sm font-medium transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+            </svg>
+            Salvar Configurações
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }

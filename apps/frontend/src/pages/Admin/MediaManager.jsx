@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { imageService } from '../../services/imageService';
 
 // Página para rota /admin/midia
 export function MediaManagerPage() {
@@ -12,79 +13,45 @@ export function MediaManager({ onSelect }) {
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState([]); // array de urls
-  const [renaming, setRenaming] = useState(null); // url da imagem a renomear
+  const [selected, setSelected] = useState([]);
+  const [renaming, setRenaming] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+  const [dragOver, setDragOver] = useState(false);
 
-  // Busca imagens já hospedadas no Cloudinary
   const fetchImages = async () => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/admin/media', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!res.ok) {
-        throw new Error('Erro ao buscar imagens');
-      }
-
-      const data = await res.json();
-      setImages(data.data?.images || data.images || []);
-    } catch (err) {
-      console.error('Erro ao buscar imagens:', err);
+      const imgs = await imageService.listMedia();
+      setImages(imgs);
+    } catch {
       setError('Erro ao buscar imagens');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchImages();
-  }, []);
+  useEffect(() => { fetchImages(); }, []);
 
-  // Filtro de busca
   const filteredImages = images.filter(img => {
     const fileName = img.split('/').pop()?.split('?')[0] || '';
     return fileName.toLowerCase().includes(search.toLowerCase());
   });
 
-  // Upload de nova(s) imagem(ns)
   const handleUpload = async (e, filesArg) => {
     const files = filesArg || e.target.files;
     if (!files || files.length === 0) return;
     setUploading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
       let newImages = [];
       for (const file of files) {
-        const formData = new FormData();
-        formData.append('image', file);
-        const res = await fetch('/api/admin/upload', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || 'Erro ao enviar imagem');
-        }
+        const data = await imageService.uploadSingle(file);
         const imageUrl = data.data?.url || data.url;
-        if (imageUrl) {
-          newImages.push(imageUrl);
-        }
+        if (imageUrl) newImages.push(imageUrl);
       }
-      if (newImages.length > 0) {
-        setImages((prev) => [...newImages, ...prev]);
-      }
+      if (newImages.length > 0) setImages(prev => [...newImages, ...prev]);
     } catch (err) {
-      console.error('Erro no upload:', err);
       setError(err.message || 'Erro ao enviar imagem');
     } finally {
       setUploading(false);
@@ -92,232 +59,205 @@ export function MediaManager({ onSelect }) {
     }
   };
 
+  const handleDeleteMany = async (urls) => {
+    if (!window.confirm(urls.length > 1 ? 'Deseja excluir as imagens selecionadas?' : 'Deseja excluir esta imagem?')) return;
+    setLoading(true);
+    setError('');
+    try {
+      await imageService.deleteMedia(urls);
+      setImages(prev => prev.filter(img => !urls.includes(img)));
+      setSelected(sel => sel.filter(u => !urls.includes(u)));
+    } catch (err) {
+      setError(err.message || 'Erro ao excluir imagens');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRename = async (img) => {
+    if (!renameValue.trim()) return;
+    setLoading(true);
+    setError('');
+    try {
+      const cleanName = renameValue.replace(/\.[^/.]+$/, '').replace(/\s+/g, ' ').trim();
+      const newUrl = await imageService.renameMedia(img, cleanName);
+      setImages(prev => prev.map(u => u === img ? newUrl : u));
+      setRenaming(null);
+    } catch (err) {
+      setError(err.message || 'Erro ao renomear imagem');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputClass = "w-full bg-white/[0.03] border border-gray-800 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-eliteGold/50 focus:outline-none transition-colors";
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2 flex-1">
-          <h2 className="text-xl font-heading font-bold text-eliteGold whitespace-nowrap">Gerenciador de Mídia</h2>
-          <input
-            type="text"
-            placeholder="Buscar imagem..."
-            className="ml-4 px-3 py-2 rounded border border-gray-700 bg-black/40 text-gray-200 focus:outline-none focus:border-eliteGold w-full max-w-xs"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl lg:text-3xl text-white tracking-tight">Mídia</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            {loading ? 'Carregando...' : `${filteredImages.length} imagen${filteredImages.length !== 1 ? 's' : ''}`}
+          </p>
         </div>
-        <div className="flex items-center gap-2"
-          onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
-          onDrop={e => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-              handleUpload(null, e.dataTransfer.files);
-            }
-          }}
-        >
+        <div className="flex items-center gap-2">
           {selected.length > 0 && (
             <button
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-bold transition"
-              onClick={async () => {
-                if (!window.confirm('Deseja excluir as imagens selecionadas?')) return;
-                setLoading(true);
-                setError('');
-                try {
-                  const token = localStorage.getItem('token');
-                  const res = await fetch('/api/admin/media', {
-                    method: 'DELETE',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ urls: selected })
-                  });
-                  if (!res.ok) {
-                    const data = await res.json();
-                    setError(data?.message || 'Erro ao excluir imagens');
-                    return;
-                  }
-                  setImages(prev => prev.filter(img => !selected.includes(img)));
-                  setSelected([]);
-                } catch (err) {
-                  setError('Erro ao excluir imagens');
-                } finally {
-                  setLoading(false);
-                }
-              }}
-            >Excluir Selecionadas</button>
+              onClick={() => handleDeleteMany(selected)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-red-500/15 hover:bg-red-500/25 text-red-400 rounded-lg text-sm font-medium transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              Excluir ({selected.length})
+            </button>
           )}
-          <label className="inline-flex items-center gap-2 cursor-pointer px-4 py-2 bg-eliteGold/10 hover:bg-eliteGold/20 text-eliteGold rounded-lg font-medium transition-all border border-eliteGold/30">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-            <span>Enviar Imagem</span>
+          <label className="inline-flex items-center gap-1.5 cursor-pointer px-4 py-2 bg-eliteGold/15 hover:bg-eliteGold/25 text-eliteGold rounded-lg text-sm font-medium transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+            Enviar
             <input type="file" accept="image/*" multiple onChange={handleUpload} disabled={uploading} className="hidden" />
           </label>
         </div>
       </div>
+
+      {/* Search */}
+      <div className="relative">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="11" cy="11" r="8" strokeWidth={1.5} /><path strokeLinecap="round" strokeWidth={1.5} d="m21 21-4.35-4.35" /></svg>
+        <input
+          type="text"
+          placeholder="Buscar imagem por nome..."
+          className={`${inputClass} pl-9`}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* Status messages */}
       {uploading && (
         <div className="flex items-center gap-2 text-sm text-gray-400">
-          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /></svg>
+          <div className="animate-spin w-4 h-4 border-2 border-eliteGold border-t-transparent rounded-full" />
           Enviando imagem...
         </div>
       )}
-      {error && <div className="text-red-400 font-medium">{error}</div>}
+      {error && (
+        <div className="p-3 rounded-lg text-sm bg-red-500/10 border border-red-500/20 text-red-400">{error}</div>
+      )}
+
+      {/* Content */}
       {loading ? (
-        <div className="flex items-center gap-2 text-gray-400 text-sm">
-          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /></svg>
-          Carregando imagens...
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin w-8 h-8 border-2 border-eliteGold border-t-transparent rounded-full" />
         </div>
       ) : filteredImages.length === 0 ? (
-        <div className="text-gray-400 text-center py-12">Nenhuma mídia encontrada no sistema.</div>
+        <div className="bg-gray-900/30 border border-gray-800/60 rounded-xl p-12 text-center">
+          <div className="w-12 h-12 rounded-xl bg-white/[0.03] flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" /></svg>
+          </div>
+          <p className="text-gray-500 text-sm">Nenhuma mídia encontrada</p>
+        </div>
       ) : (
-        <div className="grid gap-3 justify-start" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 0fr))' }}>
-          {filteredImages.map((img, idx) => {
-            let fileName = img.split('/').pop()?.split('?')[0] || 'imagem';
+        <div
+          className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 transition-colors rounded-xl ${dragOver ? 'ring-2 ring-eliteGold/40 ring-dashed bg-eliteGold/[0.02]' : ''}`}
+          onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={e => { e.preventDefault(); e.stopPropagation(); setDragOver(false); if (e.dataTransfer.files?.length) handleUpload(null, e.dataTransfer.files); }}
+        >
+          {filteredImages.map((img) => {
+            const fileName = img.split('/').pop()?.split('?')[0] || 'imagem';
             const isSelected = selected.includes(img);
             return (
-              <div key={img} className={`relative group border-2 rounded-lg overflow-hidden shadow transition-all bg-gray-900/60 ${isSelected ? 'border-eliteGold' : 'border-gray-800 hover:border-eliteGold/60'} max-w-[320px] mx-auto`}>
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  readOnly
-                  className="absolute top-2 left-2 z-10 w-4 h-4 accent-eliteGold bg-black/60 border border-gray-700 rounded pointer-events-none"
-                  tabIndex={-1}
-                  title="Selecionar imagem"
-                />
-                <div className="relative w-full h-64 cursor-pointer group"
+              <div key={img} className={`relative group rounded-xl overflow-hidden border transition-all ${isSelected ? 'border-eliteGold/60 ring-1 ring-eliteGold/30' : 'border-gray-800/60 hover:border-gray-700'}`}>
+                {/* Checkbox */}
+                <div
+                  className={`absolute top-2 left-2 z-10 w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${isSelected ? 'bg-eliteGold border-eliteGold' : 'bg-black/50 border-gray-600 hover:border-gray-400'}`}
                   onClick={() => setSelected(sel => isSelected ? sel.filter(u => u !== img) : [...sel, img])}
-                  title={isSelected ? 'Desmarcar imagem' : 'Selecionar imagem'}
+                >
+                  {isSelected && (
+                    <svg className="w-3 h-3 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  )}
+                </div>
+
+                {/* Image */}
+                <div
+                  className="aspect-square cursor-pointer overflow-hidden bg-gray-900/50"
+                  onClick={() => setSelected(sel => isSelected ? sel.filter(u => u !== img) : [...sel, img])}
                 >
                   <img
                     src={img}
                     alt={fileName}
-                    className={`w-full h-64 object-cover group-hover:scale-105 transition-transform duration-200 border-b-2 border-eliteGold/30 ${isSelected ? 'ring-4 ring-eliteGold/60' : ''}`}
-                    style={{ boxSizing: 'border-box' }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <button
-                    type="button"
-                    className="absolute top-2 right-2 bg-black/70 hover:bg-black/90 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg z-10"
-                    title="Visualizar imagem em nova aba"
-                    onClick={e => { e.stopPropagation(); window.open(img, '_blank'); }}
-                  >
-                    <svg className="w-5 h-5 mx-auto my-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0c0 5-7 9-9 9s-9-4-9-9 7-9 9-9 9 4 9 9z" />
-                    </svg>
-                  </button>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent px-4 py-3 flex flex-col items-center gap-2">
-                  <span className="block text-eliteGold text-base font-bold truncate w-full text-center drop-shadow" title={decodeURIComponent(fileName)}>{decodeURIComponent(fileName)}</span>
-                  <div className="flex justify-center gap-3 w-full">
-                    {/* Botão de renomear desabilitado temporariamente devido a bug */}
+
+                {/* Overlay actions (visible on hover) */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3 pt-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p className="text-xs text-white/80 truncate mb-2" title={decodeURIComponent(fileName)}>{decodeURIComponent(fileName)}</p>
+                  <div className="flex items-center gap-1.5">
                     <button
-                      className="flex-1 px-2 py-2 rounded bg-red-600 hover:bg-red-500 text-white text-sm font-bold transition shadow"
+                      type="button"
+                      className="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                      title="Visualizar"
+                      onClick={e => { e.stopPropagation(); window.open(img, '_blank'); }}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="p-1.5 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-lg transition-colors"
                       title="Excluir"
-                      onClick={async () => {
-                        if (!window.confirm('Deseja excluir esta imagem?')) return;
-                        setLoading(true);
-                        setError('');
-                        try {
-                          const token = localStorage.getItem('token');
-                          const res = await fetch('/api/admin/media', {
-                            method: 'DELETE',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              Authorization: `Bearer ${token}`
-                            },
-                            body: JSON.stringify({ urls: [img] })
-                          });
-                          if (!res.ok) throw new Error('Erro ao excluir imagem');
-                          setImages(prev => prev.filter(u => u !== img));
-                          setSelected(sel => sel.filter(u => u !== img));
-                        } catch (err) {
-                          setError('Erro ao excluir imagem');
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                    >Excluir</button>
+                      onClick={e => { e.stopPropagation(); handleDeleteMany([img]); }}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
                   </div>
                 </div>
-                {/* Modal de renomear */}
+
+                {/* Rename modal */}
                 {renaming === img && (
-                  <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-20 p-4">
-                    <div className="bg-gray-900 rounded-lg p-4 w-full max-w-xs flex flex-col gap-2 border border-eliteGold">
-                      <label className="text-eliteGold text-sm font-bold">Novo nome:</label>
+                  <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-20 p-3" onClick={() => setRenaming(null)}>
+                    <div className="bg-gray-900 border border-gray-800/60 rounded-xl p-4 w-full max-w-xs space-y-3" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-white">Renomear</p>
+                        <button onClick={() => setRenaming(null)} className="text-gray-500 hover:text-white transition-colors">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
                       <input
-                        className="px-3 py-2 rounded border border-gray-700 bg-black/40 text-gray-200 focus:outline-none focus:border-eliteGold text-base w-full"
+                        className={inputClass}
                         value={renameValue}
                         onChange={e => {
-                          // Remove extensão e caracteres inválidos, decodifica espaços
                           let val = e.target.value;
-                          val = val.replace(/\.[^/.]+$/, ''); // remove extensão
-                          val = val.replace(/[^\w\s.-]/g, ''); // só permite letras, números, espaço, . e -
+                          val = val.replace(/\.[^/.]+$/, '');
+                          val = val.replace(/[^\w\s.-]/g, '');
                           setRenameValue(val);
                         }}
                         autoFocus
                         maxLength={80}
-                        placeholder="Novo nome da imagem"
+                        placeholder="Novo nome"
                         spellCheck={false}
                       />
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          className="flex-1 px-2 py-1 bg-eliteGold text-black rounded font-bold hover:bg-yellow-400"
-                          onClick={async () => {
-                            if (!renameValue.trim()) return;
-                            setLoading(true);
-                            setError('');
-                            try {
-                              const token = localStorage.getItem('token');
-                              const payload = { url: img, newName: renameValue.replace(/\.[^/.]+$/, '').replace(/\s+/g, ' ').trim() };
-                              console.log('[RENAME][FRONT] Enviando payload:', payload);
-                              const res = await fetch('/api/admin/media/rename', {
-                                method: 'PUT',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                  Authorization: `Bearer ${token}`
-                                },
-                                // Envia o nome com espaços, mas backend deve tratar encode
-                                // Envia o nome sem extensão, sem espaços extras, decodificado
-                                body: JSON.stringify(payload)
-                              });
-
-                              if (!res.ok) {
-                                const data = await res.json();
-                                setError(data?.message || 'Erro ao renomear imagem');
-                                return;
-                              }
-                              const data = await res.json();
-                              setImages(prev => prev.map(u => u === img ? data.data?.newUrl || data.newUrl : u));
-                              setRenaming(null);
-                            } catch (err) {
-                              setError('Erro ao renomear imagem');
-                            } finally {
-                              setLoading(false);
-                            }
-                          }}
-                        >Salvar</button>
-                        <button
-                          className="flex-1 px-2 py-1 bg-gray-700 text-white rounded font-bold hover:bg-gray-600"
-                          onClick={() => setRenaming(null)}
-                        >Cancelar</button>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleRename(img)} className="flex-1 px-3 py-1.5 bg-eliteGold/15 hover:bg-eliteGold/25 text-eliteGold rounded-lg text-xs font-medium transition-colors">Salvar</button>
+                        <button onClick={() => setRenaming(null)} className="flex-1 px-3 py-1.5 bg-white/[0.05] hover:bg-white/[0.08] text-gray-400 rounded-lg text-xs font-medium transition-colors">Cancelar</button>
                       </div>
                     </div>
-                  </div>
-                )}
-                {/* Botão de seleção individual removido para seleção múltipla */}
-                {/* Botão de seleção múltipla para integração com ProductsAdminPage */}
-                {onSelect && selected.length > 0 && (
-                  <div className="fixed bottom-6 left-0 right-0 flex justify-center z-[110] pointer-events-none">
-                    <button
-                      className="px-6 py-3 bg-eliteGold text-black font-bold rounded-xl shadow-lg border border-eliteGold/40 hover:bg-yellow-400 transition-all pointer-events-auto"
-                      style={{ minWidth: 220 }}
-                      onClick={() => onSelect(selected)}
-                    >
-                      Selecionar {selected.length} imagem{selected.length > 1 ? 's' : ''}
-                    </button>
                   </div>
                 )}
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Floating select button for ProductsAdminPage integration */}
+      {onSelect && selected.length > 0 && (
+        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-[110] pointer-events-none">
+          <button
+            className="px-5 py-2.5 bg-eliteGold text-black font-bold rounded-xl shadow-lg border border-eliteGold/40 hover:bg-yellow-400 transition-all pointer-events-auto text-sm"
+            onClick={() => onSelect(selected)}
+          >
+            Selecionar {selected.length} imagem{selected.length > 1 ? 's' : ''}
+          </button>
         </div>
       )}
     </div>

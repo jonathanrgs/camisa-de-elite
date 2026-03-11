@@ -110,6 +110,46 @@ export const imageService = {
 
     return data;
   },
+
+  async listMedia() {
+    const token = getToken();
+    const response = await fetch(`${API_BASE}/admin/media`, {
+      headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Erro ao buscar imagens');
+    return data.data?.images || data.images || [];
+  },
+
+  async deleteMedia(urls) {
+    const token = getToken();
+    const response = await fetch(`${API_BASE}/admin/media`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ urls }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Erro ao excluir imagens');
+    return data;
+  },
+
+  async renameMedia(url, newName) {
+    const token = getToken();
+    const response = await fetch(`${API_BASE}/admin/media/rename`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ url, newName }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Erro ao renomear imagem');
+    return data.data?.newUrl || data.newUrl;
+  },
 };
 
 export default imageService;
