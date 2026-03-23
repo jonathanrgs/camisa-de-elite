@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { EyeIcon } from '../../components/ui/EyeIcon';
 import { userService } from '../../services/userService';
 
+// Imagem padrão quando o produto não tem imagens
+const FALLBACK_IMG = 'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp';
+
 const statusColors = {
   PENDENTE: 'bg-yellow-500/20 text-yellow-400',
   CONFIRMADO: 'bg-blue-500/20 text-blue-400',
@@ -111,7 +114,7 @@ export function OrdersPage() {
                 {order.items.map((item) => (
                   <div key={item.id} className="flex gap-3 bg-gray-800/50 rounded-lg p-2">
                     <img
-                      src={item.product.images[0] || '/placeholder.jpg'}
+                      src={item.product.images?.[0] || FALLBACK_IMG}
                       alt={item.product.name}
                       className="w-16 h-16 object-cover rounded"
                     />

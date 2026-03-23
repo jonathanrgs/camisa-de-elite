@@ -2,8 +2,23 @@
 export const deleteProductPermanent = async (req, res) => {
   try {
     const { id } = req.params;
-    // Remove o produto do banco de dados
-    await prisma.product.delete({ where: { id } });
+
+    // Verificar se o produto existe
+    const product = await prisma.product.findUnique({ where: { id } });
+    if (!product) {
+      return res.status(404).json({ error: 'Produto não encontrado' });
+    }
+
+    // Usar transação para remover registros dependentes e o produto
+    await prisma.$transaction(async (tx) => {
+      // Remover itens de pedidos que referenciam este produto
+      await tx.orderItem.deleteMany({ where: { productId: id } });
+      // Remover reservas de carrinho
+      await tx.cartReservation.deleteMany({ where: { productId: id } });
+      // Deletar o produto (cascade remove inventory, reviews, alerts)
+      await tx.product.delete({ where: { id } });
+    });
+
     res.json({ message: 'Produto excluído permanentemente com sucesso' });
   } catch (error) {
     console.error('Erro ao excluir permanentemente produto:', error);

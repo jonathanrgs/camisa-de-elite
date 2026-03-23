@@ -143,10 +143,26 @@ export const productController = {
     return successResponse(res, product);
   },
 
-  // DELETE /api/admin/products/:id (soft delete)
+  // DELETE /api/admin/products/:id (exclusão permanente)
   async delete(req, res) {
     const { id } = req.params;
-    const product = await prisma.product.update({ where: { id }, data: { isActive: false } });
-    return successResponse(res, product);
+
+    // Verificar se o produto existe
+    const product = await prisma.product.findUnique({ where: { id } });
+    if (!product) {
+      return errorResponse(res, 'Produto não encontrado', 'PRODUCT_NOT_FOUND', 404);
+    }
+
+    // Usar transação para remover registros dependentes e o produto
+    await prisma.$transaction(async (tx) => {
+      // Remover itens de pedidos que referenciam este produto
+      await tx.orderItem.deleteMany({ where: { productId: id } });
+      // Remover reservas de carrinho
+      await tx.cartReservation.deleteMany({ where: { productId: id } });
+      // Deletar o produto (cascade remove inventory, reviews, alerts)
+      await tx.product.delete({ where: { id } });
+    });
+
+    return successResponse(res, { message: 'Produto excluído permanentemente' });
   }
 };

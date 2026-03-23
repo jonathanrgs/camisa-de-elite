@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { userService } from '../../services/userService';
 
+// Imagem padrão quando o produto não tem imagens
+const FALLBACK_IMG = 'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp';
+
 export function ReviewsPage() {
   const [reviews, setReviews] = useState([]);
   const [productsToReview, setProductsToReview] = useState([]);
@@ -113,7 +116,7 @@ export function ReviewsPage() {
             {productsToReview.map((product) => (
               <div key={product.id} className="flex items-center gap-4 bg-gray-800/50 rounded-lg p-3">
                 <img
-                  src={product.images[0] || '/placeholder.jpg'}
+                  src={product.images?.[0] || FALLBACK_IMG}
                   alt={product.name}
                   className="w-16 h-16 object-cover rounded"
                 />
@@ -200,7 +203,7 @@ export function ReviewsPage() {
               <div key={review.id} className="bg-gray-800/50 rounded-lg p-4">
                 <div className="flex items-start gap-4">
                   <img
-                    src={review.product.images[0] || '/placeholder.jpg'}
+                    src={review.product.images?.[0] || FALLBACK_IMG}
                     alt={review.product.name}
                     className="w-16 h-16 object-cover rounded"
                   />

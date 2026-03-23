@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 
+// Imagem padrão quando o produto não tem imagens
+const FALLBACK_IMG = 'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp';
+
 const statusConfig = {
   PENDENTE: { 
     bg: 'bg-amber-500/15', 
@@ -274,7 +277,7 @@ export function OrdersAdminPage() {
                       {order.items.map((item) => (
                         <div key={item.id} className="flex items-center gap-3 bg-white/[0.02] border border-gray-800/40 rounded-lg p-2.5">
                           <img
-                            src={item.product.images[0] || '/placeholder.jpg'}
+                            src={item.product.images?.[0] || FALLBACK_IMG}
                             alt={item.product.name}
                             className="w-11 h-11 object-cover rounded-lg"
                           />

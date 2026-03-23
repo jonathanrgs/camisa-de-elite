@@ -46,6 +46,9 @@ import { adminService } from '../../services/adminService';
 import { imageService } from '../../services/imageService';
 import { ImageUploader } from '../../components/admin/ImageUploader';
 
+// Imagem padrão quando o produto não tem imagens
+const FALLBACK_IMG = 'https://http2.mlstatic.com/D_NQ_NP_935818-MLA72578168113_112023-O.webp';
+
 // Converte data URL para File para upload
 function dataURLtoFile(dataUrl, filename) {
   const arr = dataUrl.split(',');
@@ -78,6 +81,7 @@ export function ProductsAdminPage() {
     city: '',
     season: '',
     images: [''],
+    isActive: true,
     stock: { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }
   });
   // Debug: log sempre que as imagens mudarem
@@ -134,6 +138,7 @@ export function ProductsAdminPage() {
       city: '',
       season: '2024',
       images: [''],
+      isActive: true,
       stock: { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }
     });
     setShowForm(true);
@@ -154,6 +159,7 @@ export function ProductsAdminPage() {
       city: product.city || '',
       season: product.season || '',
       images: product.images.length > 0 ? product.images : [''],
+      isActive: product.isActive !== false,
       stock: product.inventory?.stock || { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }
     });
     setShowForm(true);
@@ -229,14 +235,29 @@ export function ProductsAdminPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+    if (!confirm('Tem certeza que deseja EXCLUIR PERMANENTEMENTE este produto? Esta ação não pode ser desfeita.')) return;
 
     try {
       await adminService.deleteProduct(id);
-      setMessage({ type: 'success', text: 'Produto excluído!' });
+      setMessage({ type: 'success', text: 'Produto excluído permanentemente!' });
       loadProducts();
     } catch (err) {
       setMessage({ type: 'error', text: err.message });
+    }
+  };
+
+  const handleToggleActive = async (product) => {
+    try {
+      await adminService.updateProduct(product.id, { isActive: !product.isActive });
+      setProducts((prev) => prev.map((p) => (
+        p.id === product.id ? { ...p, isActive: !product.isActive } : p
+      )));
+      setMessage({
+        type: 'success',
+        text: `Produto ${product.isActive ? 'inativado' : 'ativado'} com sucesso!`
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Erro ao atualizar status do produto' });
     }
   };
 
@@ -350,6 +371,21 @@ export function ProductsAdminPage() {
                   </h2>
                 </div>
               </div>
+              <div className="flex items-center gap-3">
+                {editingProduct && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                      formData.isActive
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+                        : 'bg-gray-500/15 text-gray-400 border-gray-500/30 hover:bg-gray-500/25'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${formData.isActive ? 'bg-emerald-400' : 'bg-gray-500'}`} />
+                    {formData.isActive ? 'Ativo' : 'Inativo'}
+                  </button>
+                )}
               <button
                 type="button"
                 onClick={() => { setShowForm(false); setActiveTab(0); }}
@@ -359,6 +395,7 @@ export function ProductsAdminPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
+              </div>
             </div>
 
             {/* Abas de navegação */}
@@ -724,7 +761,7 @@ export function ProductsAdminPage() {
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           <img
-                            src={product.images[0] || '/placeholder.jpg'}
+                            src={product.images?.[0] || FALLBACK_IMG}
                             alt={product.name}
                             className="w-10 h-10 object-cover rounded-lg"
                           />
@@ -762,6 +799,24 @@ export function ProductsAdminPage() {
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                           </button>
                           <button
+                            onClick={() => handleToggleActive(product)}
+                            className={`p-1.5 rounded-lg transition-colors ${product.isActive
+                              ? 'text-gray-500 hover:text-amber-400 hover:bg-amber-500/10'
+                              : 'text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/10'
+                              }`}
+                            title={product.isActive ? 'Inativar' : 'Ativar'}
+                          >
+                            {product.isActive ? (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m9 12 2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            )}
+                          </button>
+                          <button
                             onClick={() => handleDelete(product.id)}
                             className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Excluir"
@@ -790,7 +845,7 @@ export function ProductsAdminPage() {
               <div key={product.id} className="bg-gray-900/30 border border-gray-800/60 rounded-xl overflow-hidden group hover:border-gray-700 transition-all">
                 <div className="aspect-square overflow-hidden bg-gray-900/50 relative">
                   <img
-                    src={product.images[0] || '/placeholder.jpg'}
+                    src={product.images?.[0] || FALLBACK_IMG}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -813,6 +868,15 @@ export function ProductsAdminPage() {
                   </div>
                   <div className="flex items-center gap-1 pt-1 border-t border-gray-800/40">
                     <button onClick={() => openEditProduct(product)} className="flex-1 text-center py-1 text-xs text-gray-500 hover:text-white hover:bg-white/[0.03] rounded transition-colors">Editar</button>
+                    <button
+                      onClick={() => handleToggleActive(product)}
+                      className={`flex-1 text-center py-1 text-xs rounded transition-colors ${product.isActive
+                        ? 'text-gray-500 hover:text-amber-400 hover:bg-amber-500/10'
+                        : 'text-gray-500 hover:text-emerald-400 hover:bg-emerald-500/10'
+                        }`}
+                    >
+                      {product.isActive ? 'Inativar' : 'Ativar'}
+                    </button>
                     <button onClick={() => handleDelete(product.id)} className="flex-1 text-center py-1 text-xs text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors">Excluir</button>
                   </div>
                 </div>
