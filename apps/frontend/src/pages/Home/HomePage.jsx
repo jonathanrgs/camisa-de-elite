@@ -2,26 +2,16 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Button, ProductCard, Logo } from '../../components';
 import { productService } from '../../services/productService';
-import { api } from '../../services/api';
-
-// Ícones fallback por slug da categoria
-const CATEGORY_ICONS = {
-  nacional: { color: 'green', icon: <svg className="w-6 h-6 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21V3h18v18H3z" /><circle cx="12" cy="12" r="4" /></svg> },
-  internacional: { color: 'blue', icon: <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg> },
-  selecao: { color: 'yellow', icon: <svg className="w-6 h-6 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg> },
-  retro: { color: 'eliteGold', icon: <svg className="w-6 h-6 text-eliteGold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg> },
-};
-const DEFAULT_ICON = { color: 'gray', icon: <svg className="w-6 h-6 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg> };
 
 export function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
         const response = await productService.getProducts({ pageSize: 8 });
+        // A API retorna { success, data: { items, pagination } }
         const items = response?.data?.items || [];
         setFeaturedProducts(items);
       } catch (error) {
@@ -32,7 +22,6 @@ export function HomePage() {
       }
     };
     loadProducts();
-    api.get('/categories').then(res => setCategories((res.data || []).filter(c => c.isActive))).catch(() => {});
   }, []);
 
   return (
@@ -122,20 +111,58 @@ export function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-          {categories.map(cat => {
-            const slug = cat.slug || cat.name?.toLowerCase();
-            const iconData = CATEGORY_ICONS[slug] || DEFAULT_ICON;
-            return (
-              <Link key={cat.id} to={`/catalogo?category=${slug.toUpperCase()}`} className="card-hover group p-6 text-center border border-transparent hover:border-eliteGold/40">
-                <div className={`w-12 h-12 mx-auto mb-3 bg-${iconData.color}-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  {iconData.icon}
-                </div>
-                <h3 className="text-lg font-semibold group-hover:text-eliteGold transition-colors">
-                  {cat.emoji ? `${cat.emoji} ` : ''}{cat.name}
-                </h3>
-              </Link>
-            );
-          })}
+          {/* ...links de categoria... */}
+          <Link to="/catalogo?category=NACIONAL" className="card-hover group p-6 text-center border border-transparent hover:border-eliteGold/40">
+            <div className="w-12 h-12 mx-auto mb-3 bg-green-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+              <svg className="w-6 h-6 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 21V3h18v18H3z" />
+                <circle cx="12" cy="12" r="4" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold group-hover:text-eliteGold transition-colors">
+              Nacionais
+            </h3>
+            <p className="text-gray-500 text-sm mt-1">Brasileirão e mais</p>
+          </Link>
+          <Link to="/catalogo?category=INTERNACIONAL" className="card-hover group p-6 text-center border border-transparent hover:border-eliteGold/40">
+            <div className="w-12 h-12 mx-auto mb-3 bg-blue-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+              <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold group-hover:text-eliteGold transition-colors">
+              Internacionais
+            </h3>
+            <p className="text-gray-500 text-sm mt-1">Europa e mais</p>
+          </Link>
+          <Link to="/catalogo?category=SELECAO" className="card-hover group p-6 text-center border border-transparent hover:border-eliteGold/40">
+            <div className="w-12 h-12 mx-auto mb-3 bg-yellow-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+              <svg className="w-6 h-6 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold group-hover:text-eliteGold transition-colors">
+              Seleções
+            </h3>
+            <p className="text-gray-500 text-sm mt-1">Copa do Mundo</p>
+          </Link>
+          <Link to="/catalogo?category=RETRO" className="card-hover group p-6 text-center border border-transparent hover:border-eliteGold/40">
+            <div className="w-12 h-12 mx-auto mb-3 bg-eliteGold/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+              <svg className="w-6 h-6 text-eliteGold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold group-hover:text-eliteGold transition-colors">
+              Retrô
+            </h3>
+            <p className="text-gray-500 text-sm mt-1">Clássicas</p>
+          </Link>
         </div>
         {/* CTA junto */}
         <div className="bg-eliteBlackSoft rounded-2xl py-12 px-4 text-center max-w-2xl mx-auto">

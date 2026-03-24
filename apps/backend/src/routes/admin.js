@@ -15,9 +15,6 @@ import {
   getShippingConfig,
   saveShippingConfig
 } from '../controllers/adminController.js';
-import { sizeController } from '../controllers/sizeController.js';
-import { categoryController } from '../controllers/categoryController.js';
-import { productTypeController } from '../controllers/productTypeController.js';
 import { imageController } from '../controllers/imageController.js';
 import { authenticate, authorizeAdmin } from '../middlewares/auth.js';
 import { handleProductUpload, handleSingleUpload } from '../middlewares/upload.js';
@@ -41,28 +38,6 @@ router.post('/products', createProduct);
 router.put('/products/:id', updateProduct);
 router.delete('/products/:id', deleteProductPermanent);
 router.get('/products/export/csv', exportProductsCSV);
-
-// Grupos de Tamanho (ADMIN)
-router.get('/size-groups', asyncHandler(sizeController.listAll));
-router.post('/size-groups', asyncHandler(sizeController.createGroup));
-router.put('/size-groups/:id', asyncHandler(sizeController.updateGroup));
-router.delete('/size-groups/:id', asyncHandler(sizeController.deleteGroup));
-router.post('/size-groups/:id/sizes', asyncHandler(sizeController.createSize));
-router.put('/size-groups/:id/sizes/reorder', asyncHandler(sizeController.reorderSizes));
-router.put('/sizes/:id', asyncHandler(sizeController.updateSize));
-router.delete('/sizes/:id', asyncHandler(sizeController.deleteSize));
-
-// Categorias (ADMIN)
-router.get('/categories', asyncHandler(categoryController.listAll));
-router.post('/categories', asyncHandler(categoryController.create));
-router.put('/categories/:id', asyncHandler(categoryController.update));
-router.delete('/categories/:id', asyncHandler(categoryController.delete));
-
-// Tipos de Produto (ADMIN)
-router.get('/product-types', asyncHandler(productTypeController.listAll));
-router.post('/product-types', asyncHandler(productTypeController.create));
-router.put('/product-types/:id', asyncHandler(productTypeController.update));
-router.delete('/product-types/:id', asyncHandler(productTypeController.delete));
 
 // Upload de imagens de produtos
 router.post('/products/:id/images', handleProductUpload, asyncHandler(imageController.uploadProductImages));

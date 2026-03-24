@@ -1,8 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
 import { ProductGrid } from '../../components';
-import { api } from '../../services/api';
 
 // Componente de dropdown customizado
 import { useRef } from 'react';
@@ -125,18 +124,13 @@ export function CatalogPage() {
 
   const hasActiveFilters = filters.q || filters.category || filters.state;
 
-  const [dynamicCategories, setDynamicCategories] = useState([]);
-  useEffect(() => {
-    api.get('/categories').then(res => setDynamicCategories(res.data || [])).catch(() => {});
-  }, []);
-
-  const categoryOptions = useMemo(() => [
+  const categoryOptions = [
     { value: '', label: 'Todas categorias' },
-    ...dynamicCategories.filter(c => c.isActive).map(c => ({
-      value: c.slug?.toUpperCase() || c.name?.toUpperCase(),
-      label: c.name,
-    }))
-  ], [dynamicCategories]);
+    { value: 'NACIONAL', label: 'Nacional' },
+    { value: 'INTERNACIONAL', label: 'Internacional' },
+    { value: 'SELECAO', label: 'Seleção' },
+    { value: 'RETRO', label: 'Retrô' },
+  ];
 
   const stateOptions = [
     { value: '', label: 'Todos estados' },

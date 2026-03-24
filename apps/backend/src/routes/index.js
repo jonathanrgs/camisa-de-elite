@@ -1,9 +1,5 @@
 import { Router } from 'express';
 import { healthController } from '../controllers/healthController.js';
-import { sizeController } from '../controllers/sizeController.js';
-import { categoryController } from '../controllers/categoryController.js';
-import { productTypeController } from '../controllers/productTypeController.js';
-import { asyncHandler } from '../middlewares/asyncHandler.js';
 
 import productRoutes from './productRoutes.js';
 import adminRoutes from './adminRoutes.js';
@@ -32,12 +28,6 @@ router.use('/order-link', orderLinkRoutes);
 router.use('/whatsapp', whatsappRoutes);
 router.use('/alerts', alertRoutes);
 router.use('/cart', cartRoutes);
-
-// Rotas públicas de configuração
-router.get('/size-groups', asyncHandler(sizeController.listPublic));
-router.get('/size-groups/:id', asyncHandler(sizeController.getPublic));
-router.get('/categories', asyncHandler(categoryController.listPublic));
-router.get('/product-types', asyncHandler(productTypeController.listPublic));
 
 // Rotas de cupom
 router.use('/coupons', couponRoutes);

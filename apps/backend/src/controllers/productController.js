@@ -78,16 +78,6 @@ export const productController = {
       where: { slug },
       include: {
         inventory: true,
-        sizeGroup: {
-          include: {
-            sizes: {
-              where: { isActive: true },
-              orderBy: { sortOrder: 'asc' }
-            }
-          }
-        },
-        categoryRef: true,
-        productType: true,
         reviews: {
           where: { isApproved: true },
           include: { user: { select: { id: true, name: true } } },

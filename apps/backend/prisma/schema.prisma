@@ -80,70 +80,6 @@ model User {
 }
 
 // ============================================
-// GRUPOS DE TAMANHO (Masculino, Feminino, etc.)
-// ============================================
-model SizeGroup {
-  id        String   @id @default(cuid())
-  name      String   @unique // "Masculino", "Feminino"
-  slug      String   @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  sizes    Size[]
-  products Product[]
-}
-
-model Size {
-  id           String   @id @default(cuid())
-  sizeGroupId  String
-  sizeGroup    SizeGroup @relation(fields: [sizeGroupId], references: [id], onDelete: Cascade)
-  label        String   // P, M, G, XL, 2XL, 3XL, 4XL
-  sortOrder    Int      @default(0)
-  comprimento  String?  // ex: "69-71" (cm)
-  largura      String?  // ex: "53-55" (cm)
-  altura       String?  // ex: "162-170" (cm)
-  peso         String?  // ex: "50-62" (kg)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@unique([sizeGroupId, label])
-  @@index([sizeGroupId])
-}
-
-// ============================================
-// CATEGORIAS DE PRODUTO (Nacional, Internacional, etc.)
-// ============================================
-model Category {
-  id        String   @id @default(cuid())
-  name      String   @unique // "Nacional", "Internacional", "Seleção", "Retrô"
-  slug      String   @unique
-  emoji     String?  // "🇧🇷", "🌍", "⭐", "🏆"
-  isActive  Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  products Product[]
-}
-
-// ============================================
-// TIPO DE PRODUTO (Masculina, Feminina, Unissex)
-// ============================================
-model ProductType {
-  id        String   @id @default(cuid())
-  name      String   @unique // "Masculina", "Feminina", "Unissex"
-  slug      String   @unique
-  isActive  Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  products Product[]
-}
-
-// ============================================
 // PRODUTOS
 // ============================================
 model Product {
@@ -153,7 +89,7 @@ model Product {
   description String?
   price       Float
   images      String   // JSON array de URLs
-  category    String   // NACIONAL, INTERNACIONAL, RETRO, SELECAO (legado)
+  category    String   // NACIONAL, INTERNACIONAL, RETRO, SELECAO
   team        String
   league      String?
   country     String?
@@ -163,14 +99,6 @@ model Product {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  // Novos relacionamentos dinâmicos
-  sizeGroupId   String?
-  sizeGroup     SizeGroup?   @relation(fields: [sizeGroupId], references: [id])
-  categoryId    String?
-  categoryRef   Category?    @relation(fields: [categoryId], references: [id])
-  productTypeId String?
-  productType   ProductType? @relation(fields: [productTypeId], references: [id])
 
   inventory Inventory?
   orderItems OrderItem[]
