@@ -146,7 +146,7 @@ export function HomePage() {
             Entre em contato pelo WhatsApp e encomende sua camisa favorita
           </p>
           <a
-            href="https://wa.me/5511999999999"
+            href="https://wa.me/5534996769091"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2"
