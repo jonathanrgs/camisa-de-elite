@@ -14,6 +14,7 @@ app.use(
       'https://camisa-de-elite-frontend.vercel.app',
       'https://camisa-de-elite-frontend-git-prec-90f3dd-jonathan-ryans-projects.vercel.app',
       'https://camisa-de-elite-frontend.onrender.com',
+      'https://www.camisadeelite.com.br',
       'http://localhost:3000',
       'http://localhost:3001'
     ],
