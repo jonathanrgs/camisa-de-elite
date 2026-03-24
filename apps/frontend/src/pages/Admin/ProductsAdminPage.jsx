@@ -44,6 +44,7 @@ import { useState, useEffect } from 'react';
 import { MediaManager } from './MediaManager.jsx';
 import { adminService } from '../../services/adminService';
 import { imageService } from '../../services/imageService';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { ImageUploader } from '../../components/admin/ImageUploader';
 
 // Imagem padrão quando o produto não tem imagens
@@ -74,6 +75,9 @@ export function ProductsAdminPage() {
     description: '',
     price: '',
     category: 'NACIONAL',
+    categoryId: '',
+    productTypeId: '',
+    sizeGroupId: '',
     team: '',
     league: '',
     country: '',
@@ -82,7 +86,7 @@ export function ProductsAdminPage() {
     season: '',
     images: [''],
     isActive: true,
-    stock: { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }
+    stock: {}
   });
   // Debug: log sempre que as imagens mudarem
   useEffect(() => {
@@ -93,10 +97,31 @@ export function ProductsAdminPage() {
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState('list'); // 'list' ou 'grid'
+  const [categories, setCategories] = useState([]);
+  const [productTypes, setProductTypes] = useState([]);
+  const [sizeGroups, setSizeGroups] = useState([]);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadProducts();
+    loadDynamicData();
   }, []);
+
+  const loadDynamicData = async () => {
+    try {
+      const [catRes, typeRes, sizeRes] = await Promise.all([
+        adminService.getCategories(),
+        adminService.getProductTypes(),
+        adminService.getSizeGroups(),
+      ]);
+      setCategories(catRes.data || []);
+      setProductTypes(typeRes.data || []);
+      setSizeGroups(sizeRes.data || []);
+    } catch (err) {
+      console.error('Erro ao carregar dados dinâmicos:', err);
+    }
+  };
 
   const loadProducts = async () => {
     try {
@@ -131,6 +156,9 @@ export function ProductsAdminPage() {
       description: '',
       price: '',
       category: 'NACIONAL',
+      categoryId: '',
+      productTypeId: '',
+      sizeGroupId: '',
       team: '',
       league: '',
       country: 'Brasil',
@@ -139,7 +167,7 @@ export function ProductsAdminPage() {
       season: '2024',
       images: [''],
       isActive: true,
-      stock: { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }
+      stock: {}
     });
     setShowForm(true);
   };
@@ -152,6 +180,9 @@ export function ProductsAdminPage() {
       description: product.description || '',
       price: product.price.toString(),
       category: product.category,
+      categoryId: product.categoryId || '',
+      productTypeId: product.productTypeId || '',
+      sizeGroupId: product.sizeGroupId || '',
       team: product.team,
       league: product.league || '',
       country: product.country || '',
@@ -160,7 +191,7 @@ export function ProductsAdminPage() {
       season: product.season || '',
       images: product.images.length > 0 ? product.images : [''],
       isActive: product.isActive !== false,
-      stock: product.inventory?.stock || { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }
+      stock: product.inventory?.stock || {}
     });
     setShowForm(true);
   };
@@ -234,15 +265,18 @@ export function ProductsAdminPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja EXCLUIR PERMANENTEMENTE este produto? Esta ação não pode ser desfeita.')) return;
-
+  const handleDeleteConfirm = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
     try {
-      await adminService.deleteProduct(id);
+      await adminService.deleteProduct(confirmDelete);
       setMessage({ type: 'success', text: 'Produto excluído permanentemente!' });
       loadProducts();
     } catch (err) {
       setMessage({ type: 'error', text: err.message });
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(null);
     }
   };
 
@@ -516,15 +550,18 @@ export function ProductsAdminPage() {
                           <span className="text-red-400">*</span>
                         </label>
                         <select
-                          value={formData.category}
-                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                          value={formData.categoryId}
+                          onChange={(e) => {
+                            const cat = categories.find(c => c.id === e.target.value);
+                            setFormData({ ...formData, categoryId: e.target.value, category: cat?.name?.toUpperCase() || formData.category });
+                          }}
                           className="w-full bg-gray-900/80 border border-gray-700 hover:border-gray-600 focus:border-eliteGold rounded-xl px-4 py-3 text-white outline-none transition-all appearance-none cursor-pointer"
                           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '20px' }}
                         >
-                          <option value="NACIONAL">🇧🇷 Nacional</option>
-                          <option value="INTERNACIONAL">🌍 Internacional</option>
-                          <option value="SELECAO">⭐ Seleção</option>
-                          <option value="RETRO">🏆 Retrô</option>
+                          <option value="">Selecione...</option>
+                          {categories.filter(c => c.isActive).map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.emoji ? `${cat.emoji} ` : ''}{cat.name}</option>
+                          ))}
                         </select>
                       </div>
                       <div className="space-y-1.5">
@@ -540,6 +577,37 @@ export function ProductsAdminPage() {
                           placeholder="Ex: Flamengo"
                           required
                         />
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-sm text-gray-400">Tipo de Produto</label>
+                        <select
+                          value={formData.productTypeId}
+                          onChange={(e) => setFormData({ ...formData, productTypeId: e.target.value })}
+                          className="w-full bg-gray-900/80 border border-gray-700 hover:border-gray-600 focus:border-eliteGold rounded-xl px-4 py-3 text-white outline-none transition-all appearance-none cursor-pointer"
+                          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '20px' }}
+                        >
+                          <option value="">Selecione...</option>
+                          {productTypes.filter(t => t.isActive).map(type => (
+                            <option key={type.id} value={type.id}>{type.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm text-gray-400">Grupo de Tamanhos</label>
+                        <select
+                          value={formData.sizeGroupId}
+                          onChange={(e) => setFormData({ ...formData, sizeGroupId: e.target.value })}
+                          className="w-full bg-gray-900/80 border border-gray-700 hover:border-gray-600 focus:border-eliteGold rounded-xl px-4 py-3 text-white outline-none transition-all appearance-none cursor-pointer"
+                          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '20px' }}
+                        >
+                          <option value="">Padrão</option>
+                          {sizeGroups.filter(g => g.isActive).map(group => (
+                            <option key={group.id} value={group.id}>{group.name}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 
@@ -671,9 +739,16 @@ export function ProductsAdminPage() {
                 {/* Aba 3: Estoque */}
                       {activeTab === 3 && (
                         <div className="space-y-6 animate-fade-in">
-                          <p className="text-base text-eliteGold font-semibold mb-2 text-center tracking-wide">Defina a quantidade em estoque para cada tamanho</p>
-                          <div className="flex flex-row items-end justify-center gap-3 w-full max-w-2xl mx-auto">
-                            {['P', 'M', 'G', 'XL', '2XL', '3XL', '4XL'].map((size) => {
+                          <p className="text-base text-eliteGold font-semibold mb-2 text-center tracking-wide">
+                            Defina a quantidade em estoque para cada tamanho
+                          </p>
+                          <div className="flex flex-row items-end justify-center gap-3 w-full max-w-2xl mx-auto flex-wrap">
+                            {(() => {
+                              const DEFAULT_SIZES = ['P', 'M', 'G', 'XL', '2XL', '3XL', '4XL'];
+                              const group = sizeGroups.find(g => g.id === formData.sizeGroupId);
+                              const sizes = group ? (group.sizes || []).filter(s => s.isActive).map(s => s.label) : DEFAULT_SIZES;
+                              return sizes;
+                            })().map((size) => {
                               const stockValue = formData.stock[size] || 0;
                               const status = stockValue > 10 ? 'Bom' : 'Baixo';
                               const statusColor = stockValue > 10 ? 'text-green-400' : 'text-yellow-400';
@@ -817,7 +892,7 @@ export function ProductsAdminPage() {
                             )}
                           </button>
                           <button
-                            onClick={() => handleDelete(product.id)}
+                            onClick={() => setConfirmDelete(product.id)}
                             className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Excluir"
                           >
@@ -877,7 +952,7 @@ export function ProductsAdminPage() {
                     >
                       {product.isActive ? 'Inativar' : 'Ativar'}
                     </button>
-                    <button onClick={() => handleDelete(product.id)} className="flex-1 text-center py-1 text-xs text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors">Excluir</button>
+                    <button onClick={() => setConfirmDelete(product.id)} className="flex-1 text-center py-1 text-xs text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors">Excluir</button>
                   </div>
                 </div>
               </div>
@@ -888,6 +963,17 @@ export function ProductsAdminPage() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Excluir Produto"
+        message="Tem certeza que deseja EXCLUIR PERMANENTEMENTE este produto? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        variant="danger"
+        loading={deleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

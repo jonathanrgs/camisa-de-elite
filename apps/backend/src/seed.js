@@ -206,11 +206,92 @@ async function seed() {
   await prisma.orderLink.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.cartReservation.deleteMany();
   await prisma.inventory.deleteMany();
   await prisma.product.deleteMany();
+  await prisma.size.deleteMany();
+  await prisma.sizeGroup.deleteMany();
+  await prisma.category.deleteMany();
+  await prisma.productType.deleteMany();
   await prisma.user.deleteMany();
 
   console.log('🗑️  Dados antigos removidos');
+
+  // ========================================
+  // GRUPOS DE TAMANHO (SizeGroup + Size)
+  // ========================================
+  const masculinoGroup = await prisma.sizeGroup.create({
+    data: {
+      name: 'Masculino',
+      slug: 'masculino',
+      sizes: {
+        create: [
+          { label: 'P',   sortOrder: 1, comprimento: '69-71', largura: '53-55', altura: '162-170', peso: '50-62' },
+          { label: 'M',   sortOrder: 2, comprimento: '71-73', largura: '55-57', altura: '170-176', peso: '62-78' },
+          { label: 'G',   sortOrder: 3, comprimento: '73-75', largura: '57-58', altura: '176-182', peso: '78-83' },
+          { label: 'XL',  sortOrder: 4, comprimento: '75-78', largura: '58-60', altura: '182-190', peso: '83-90' },
+          { label: '2XL', sortOrder: 5, comprimento: '78-81', largura: '60-62', altura: '190-195', peso: '90-97' },
+          { label: '3XL', sortOrder: 6, comprimento: '81-83', largura: '62-64', altura: '195-197', peso: '97-104' },
+          { label: '4XL', sortOrder: 7, comprimento: '83-85', largura: '64-65', altura: '197-200', peso: '104-110' },
+        ]
+      }
+    }
+  });
+  console.log('✅ Grupo de tamanhos Masculino criado');
+
+  const femininoGroup = await prisma.sizeGroup.create({
+    data: {
+      name: 'Feminino',
+      slug: 'feminino',
+      sizes: {
+        create: [
+          { label: 'P',   sortOrder: 1, comprimento: '60-62', largura: '44-46', altura: '155-162', peso: '45-52' },
+          { label: 'M',   sortOrder: 2, comprimento: '62-64', largura: '46-48', altura: '162-168', peso: '52-60' },
+          { label: 'G',   sortOrder: 3, comprimento: '64-66', largura: '48-50', altura: '168-174', peso: '60-68' },
+          { label: 'XL',  sortOrder: 4, comprimento: '66-68', largura: '50-52', altura: '174-180', peso: '68-76' },
+          { label: '2XL', sortOrder: 5, comprimento: '68-70', largura: '52-54', altura: '180-185', peso: '76-84' },
+          { label: '3XL', sortOrder: 6, comprimento: '70-72', largura: '54-56', altura: '185-190', peso: '84-92' },
+          { label: '4XL', sortOrder: 7, comprimento: '72-74', largura: '56-58', altura: '190-195', peso: '92-100' },
+        ]
+      }
+    }
+  });
+  console.log('✅ Grupo de tamanhos Feminino criado');
+
+  // ========================================
+  // CATEGORIAS
+  // ========================================
+  const categoryMap = {};
+  const categories = [
+    { name: 'Nacional',      slug: 'nacional',      emoji: '🇧🇷', sortOrder: 1 },
+    { name: 'Internacional', slug: 'internacional', emoji: '🌍', sortOrder: 2 },
+    { name: 'Seleção',      slug: 'selecao',       emoji: '⭐', sortOrder: 3 },
+    { name: 'Retrô',        slug: 'retro',         emoji: '🏆', sortOrder: 4 },
+  ];
+  for (const cat of categories) {
+    const created = await prisma.category.create({ data: cat });
+    categoryMap[cat.slug.toUpperCase()] = created.id;
+  }
+  // Map legacy values
+  categoryMap['NACIONAL'] = categoryMap['NACIONAL'] || categoryMap['nacional'.toUpperCase()];
+  categoryMap['INTERNACIONAL'] = categoryMap['INTERNACIONAL'] || categoryMap['internacional'.toUpperCase()];
+  categoryMap['SELECAO'] = categoryMap['SELECAO'] || categoryMap['selecao'.toUpperCase()];
+  categoryMap['RETRO'] = categoryMap['RETRO'] || categoryMap['retro'.toUpperCase()];
+  console.log('✅ Categorias criadas');
+
+  // ========================================
+  // TIPOS DE PRODUTO
+  // ========================================
+  const masculinoType = await prisma.productType.create({
+    data: { name: 'Masculina', slug: 'masculina', sortOrder: 1 }
+  });
+  await prisma.productType.create({
+    data: { name: 'Feminina', slug: 'feminina', sortOrder: 2 }
+  });
+  await prisma.productType.create({
+    data: { name: 'Unissex', slug: 'unissex', sortOrder: 3 }
+  });
+  console.log('✅ Tipos de produto criados');
 
   // Criar usuário admin com senha criptografada
   const hashedPassword = await bcrypt.hash('admin123', 10);
@@ -226,7 +307,18 @@ async function seed() {
 
   // Criar produtos com estoque
   for (const productData of products) {
-    const product = await prisma.product.create({ data: productData });
+    // Mapear category string legada para categoryId
+    const legacyCategory = productData.category;
+    const categoryId = categoryMap[legacyCategory] || null;
+
+    const product = await prisma.product.create({
+      data: {
+        ...productData,
+        categoryId: categoryId,
+        productTypeId: masculinoType.id,
+        sizeGroupId: masculinoGroup.id,
+      }
+    });
 
     // Criar estoque para cada produto (P, M, G, GG, XG)
     // Criar estoque para cada produto (P, M, G, XL, 2XL, 3XL, 4XL)

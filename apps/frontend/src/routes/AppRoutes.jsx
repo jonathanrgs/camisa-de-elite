@@ -28,6 +28,8 @@ import { UsersAdminPage } from '../pages/Admin/UsersAdminPage';
 import { ShippingAdminPage } from '../pages/Admin/ShippingAdminPage';
 import { MediaManagerPage } from '../pages/Admin/MediaManager';
 import CouponsAdminPage from '../pages/Admin/CouponsAdminPage';
+import { SizesAdminPage } from '../pages/Admin/SizesAdminPage';
+import { CategoriesAdminPage } from '../pages/Admin/CategoriesAdminPage';
 
 export function AppRoutes() {
   return (
@@ -63,6 +65,8 @@ export function AppRoutes() {
         <Route path="avaliacoes" element={<ReviewsAdminPage />} />
         <Route path="usuarios" element={<UsersAdminPage />} />
         <Route path="frete" element={<ShippingAdminPage />} />
+        <Route path="tamanhos" element={<SizesAdminPage />} />
+        <Route path="categorias" element={<CategoriesAdminPage />} />
       </Route>
       {/* Rota para página não encontrada */}
       <Route path="*" element={<NotFoundPage />} />

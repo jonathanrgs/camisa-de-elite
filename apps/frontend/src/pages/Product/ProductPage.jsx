@@ -1,22 +1,20 @@
-
-  // Tabela de medidas (baseada na imagem fornecida)
-  const MEASURES = {
-    P:    { comprimento: '69-71', largura: '53-55', altura: '162-170', peso: '50-62' },
-    M:    { comprimento: '71-73', largura: '55-57', altura: '170-176', peso: '62-78' },
-    G:    { comprimento: '73-75', largura: '57-58', altura: '176-182', peso: '78-83' },
-    XL:   { comprimento: '75-78', largura: '58-60', altura: '182-190', peso: '83-90' },
-    '2XL':{ comprimento: '78-81', largura: '60-62', altura: '190-195', peso: '90-97' },
-    '3XL':{ comprimento: '81-83', largura: '62-64', altura: '195-197', peso: '97-104' },
-    '4XL':{ comprimento: '83-85', largura: '64-65', altura: '197-200', peso: '104-110' },
-  };
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useProduct } from '../../hooks/useProduct';
 import { useCart } from '../../hooks/useCart';
 import { ProductGallery, Button, Spinner } from '../../components';
 
-// Ordem dos tamanhos para exibição
-const SIZE_ORDER = ['P', 'M', 'G', 'XL', '2XL', '3XL', '4XL'];
+// Fallback hardcoded — usado apenas se o produto não tiver sizeGroup
+const FALLBACK_SIZE_ORDER = ['P', 'M', 'G', 'XL', '2XL', '3XL', '4XL'];
+const FALLBACK_MEASURES = {
+  P:    { comprimento: '69-71', largura: '53-55', altura: '162-170', peso: '50-62' },
+  M:    { comprimento: '71-73', largura: '55-57', altura: '170-176', peso: '62-78' },
+  G:    { comprimento: '73-75', largura: '57-58', altura: '176-182', peso: '78-83' },
+  XL:   { comprimento: '75-78', largura: '58-60', altura: '182-190', peso: '83-90' },
+  '2XL':{ comprimento: '78-81', largura: '60-62', altura: '190-195', peso: '90-97' },
+  '3XL':{ comprimento: '81-83', largura: '62-64', altura: '195-197', peso: '97-104' },
+  '4XL':{ comprimento: '83-85', largura: '64-65', altura: '197-200', peso: '104-110' },
+};
 
 // Componente para exibir estrelas
 function StarRating({ rating, size = 'md' }) {
@@ -35,6 +33,24 @@ export function ProductPage() {
   const [selectedSize, setSelectedSize] = useState(null);
   const [added, setAdded] = useState(false);
   const [adding, setAdding] = useState(false);
+
+  // Construir SIZE_ORDER e MEASURES a partir do sizeGroup (ou fallback)
+  // Hook deve ficar antes de qualquer early return
+  const { sizeOrder, measures } = useMemo(() => {
+    if (product?.sizeGroup?.sizes?.length) {
+      const ordered = [...product.sizeGroup.sizes].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      return {
+        sizeOrder: ordered.map(s => s.label),
+        measures: Object.fromEntries(ordered.map(s => [s.label, {
+          comprimento: s.comprimento || '-',
+          largura: s.largura || '-',
+          altura: s.altura || '-',
+          peso: s.peso || '-',
+        }]))
+      };
+    }
+    return { sizeOrder: FALLBACK_SIZE_ORDER, measures: FALLBACK_MEASURES };
+  }, [product?.sizeGroup]);
 
   if (loading) {
     return (
@@ -76,8 +92,8 @@ export function ProductPage() {
   // Pegar estoque do produto (formato: { P: 10, M: 15, G: 20, GG: 5, XG: 3 })
   const stock = product.stock || {};
   
-  // Ordenar tamanhos conforme SIZE_ORDER
-  const sizes = SIZE_ORDER.filter(size => stock[size] !== undefined).map(size => ({
+  // Ordenar tamanhos conforme sizeOrder
+  const sizes = sizeOrder.filter(size => stock[size] !== undefined).map(size => ({
     size,
     quantity: stock[size] || 0
   }));
@@ -105,7 +121,7 @@ export function ProductPage() {
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(MEASURES).map(([size, m]) => (
+                {Object.entries(measures).map(([size, m]) => (
                   <tr key={size} className="border-t border-eliteGold/10">
                     <td className="p-2 font-bold text-eliteGold">{size}</td>
                     <td className="p-2 text-white">{m.comprimento}</td>
@@ -200,14 +216,14 @@ export function ProductPage() {
             )}
 
             {/* Detalhes do tamanho selecionado */}
-            {selectedSize && MEASURES[selectedSize] && (
+            {selectedSize && measures[selectedSize] && (
               <div className="mt-4 bg-eliteBlackSoft rounded-lg p-4 border border-eliteGold/20">
                 <h4 className="font-semibold text-eliteGold mb-2">Medidas do tamanho {selectedSize}</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-                  <div><span className="text-gray-400">Comprimento:</span><br/><span className="text-white">{MEASURES[selectedSize].comprimento} cm</span></div>
-                  <div><span className="text-gray-400">Largura:</span><br/><span className="text-white">{MEASURES[selectedSize].largura} cm</span></div>
-                  <div><span className="text-gray-400">Altura:</span><br/><span className="text-white">{MEASURES[selectedSize].altura} cm</span></div>
-                  <div><span className="text-gray-400">Peso:</span><br/><span className="text-white">{MEASURES[selectedSize].peso} kg</span></div>
+                  <div><span className="text-gray-400">Comprimento:</span><br/><span className="text-white">{measures[selectedSize].comprimento} cm</span></div>
+                  <div><span className="text-gray-400">Largura:</span><br/><span className="text-white">{measures[selectedSize].largura} cm</span></div>
+                  <div><span className="text-gray-400">Altura:</span><br/><span className="text-white">{measures[selectedSize].altura} cm</span></div>
+                  <div><span className="text-gray-400">Peso:</span><br/><span className="text-white">{measures[selectedSize].peso} kg</span></div>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">Considerar margem de erro de 1-3 cm em cada medida.</p>
               </div>

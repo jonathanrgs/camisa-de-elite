@@ -4,18 +4,29 @@ export const deleteProductPermanent = async (req, res) => {
     const { id } = req.params;
 
     // Verificar se o produto existe
-    const product = await prisma.product.findUnique({ where: { id } });
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { inventory: true }
+    });
     if (!product) {
       return res.status(404).json({ error: 'Produto não encontrado' });
     }
 
-    // Usar transação para remover registros dependentes e o produto
+    // Usar transação para remover TODOS os registros dependentes
     await prisma.$transaction(async (tx) => {
+      // Remover alertas de estoque (via inventory)
+      if (product.inventory) {
+        await tx.stockAlert.deleteMany({ where: { inventoryId: product.inventory.id } });
+      }
+      // Remover inventário
+      await tx.inventory.deleteMany({ where: { productId: id } });
+      // Remover avaliações
+      await tx.review.deleteMany({ where: { productId: id } });
       // Remover itens de pedidos que referenciam este produto
       await tx.orderItem.deleteMany({ where: { productId: id } });
       // Remover reservas de carrinho
       await tx.cartReservation.deleteMany({ where: { productId: id } });
-      // Deletar o produto (cascade remove inventory, reviews, alerts)
+      // Deletar o produto
       await tx.product.delete({ where: { id } });
     });
 
@@ -91,7 +102,7 @@ import { prisma } from '../config/prisma.js';
 // Listar todos os produtos (com paginação)
 export const getAllProducts = async (req, res) => {
   try {
-    const { page = 1, limit = 20, search, category } = req.query;
+    const { page = 1, limit = 20, search, category, productTypeId, sizeGroupId } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const where = {};
@@ -105,12 +116,21 @@ export const getAllProducts = async (req, res) => {
     if (category) {
       where.category = category;
     }
+    if (productTypeId) {
+      where.productTypeId = productTypeId;
+    }
+    if (sizeGroupId) {
+      where.sizeGroupId = sizeGroupId;
+    }
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
         include: {
-          inventory: true
+          inventory: true,
+          sizeGroup: { include: { sizes: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } } } },
+          categoryRef: true,
+          productType: true,
         },
         skip,
         take: parseInt(limit),
@@ -153,7 +173,7 @@ export const createProduct = async (req, res) => {
     const { 
       name, slug, description, price, images, 
       category, team, league, country, state, city, season,
-      stock 
+      stock, sizeGroupId, categoryId, productTypeId
     } = req.body;
 
     if (!name || !price || !category || !team) {
@@ -172,6 +192,20 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({ error: 'Já existe um produto com este slug' });
     }
 
+    // Buscar tamanhos do grupo para criar estoque padrão
+    let defaultStock = stock;
+    if (!defaultStock && sizeGroupId) {
+      const sizes = await prisma.size.findMany({
+        where: { sizeGroupId, isActive: true },
+        orderBy: { sortOrder: 'asc' }
+      });
+      defaultStock = {};
+      sizes.forEach(s => { defaultStock[s.label] = 0; });
+    }
+    if (!defaultStock) {
+      defaultStock = { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 };
+    }
+
     const product = await prisma.product.create({
       data: {
         name,
@@ -185,7 +219,10 @@ export const createProduct = async (req, res) => {
         country,
         state,
         city,
-        season
+        season,
+        sizeGroupId: sizeGroupId || null,
+        categoryId: categoryId || null,
+        productTypeId: productTypeId || null,
       }
     });
 
@@ -193,7 +230,7 @@ export const createProduct = async (req, res) => {
     await prisma.inventory.create({
       data: {
         productId: product.id,
-        stock: JSON.stringify(stock || { P: 0, M: 0, G: 0, XL: 0, '2XL': 0, '3XL': 0, '4XL': 0 }),
+        stock: JSON.stringify(defaultStock),
         lowStockThreshold: 5
       }
     });
@@ -218,7 +255,7 @@ export const updateProduct = async (req, res) => {
     const { 
       name, description, price, images, 
       category, team, league, country, state, city, season,
-      isActive, stock 
+      isActive, stock, sizeGroupId, categoryId, productTypeId
     } = req.body;
 
     const product = await prisma.product.update({
@@ -235,7 +272,10 @@ export const updateProduct = async (req, res) => {
         state,
         city,
         season,
-        isActive
+        isActive,
+        sizeGroupId: sizeGroupId !== undefined ? (sizeGroupId || null) : undefined,
+        categoryId: categoryId !== undefined ? (categoryId || null) : undefined,
+        productTypeId: productTypeId !== undefined ? (productTypeId || null) : undefined,
       }
     });
 
